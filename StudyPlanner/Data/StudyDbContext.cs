@@ -11,6 +11,9 @@ namespace StudyPlanner.Data
         // (이 프로퍼티가 곧 DB의 테이블 하나가 됨)
         public DbSet<StudyTopic> StudyTopics { get; set; }
 
+        // Exams 테이블: 시험 정보 집합
+        public DbSet<Exam> Exams { get; set; }
+
         // DB 연결 방법 설정
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

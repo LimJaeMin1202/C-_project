@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(dotnet restore *)",
-      "Bash(dotnet build *)"
+      "Bash(dotnet build *)",
+      "Bash(rm -f studyplanner.db studyplanner.db-shm studyplanner.db-wal)",
+      "Bash(ls studyplanner.db)"
     ]
   }
 }

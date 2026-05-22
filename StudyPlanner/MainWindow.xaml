@@ -9,53 +9,161 @@
         WindowStartupLocation="CenterScreen"
         FontFamily="맑은 고딕" FontSize="14">
 
-    <Grid Margin="15">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="320"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <TabControl Margin="10">
 
-        <!-- ===== 왼쪽: 학습 주제 입력 폼 ===== -->
-        <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="15" Margin="0,0,10,0">
-            <StackPanel>
-                <TextBlock Text="학습 주제 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+        <!-- ============ 탭 1: 학습 주제 ============ -->
+        <TabItem Header="학습 주제">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
 
-                <TextBlock Text="과목" Margin="0,0,0,3"/>
-                <TextBox x:Name="txtSubject" Margin="0,0,0,10" Padding="5"/>
+                <!-- 왼쪽: 학습 주제 입력 폼 -->
+                <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="학습 주제 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
 
-                <TextBlock Text="단원 / 주제" Margin="0,0,0,3"/>
-                <TextBox x:Name="txtUnit" Margin="0,0,0,10" Padding="5"/>
+                        <TextBlock Text="과목" Margin="0,0,0,3"/>
+                        <TextBox x:Name="txtSubject" Margin="0,0,0,10" Padding="5"/>
 
-                <TextBlock Text="학습일" Margin="0,0,0,3"/>
-                <DatePicker x:Name="dpStudyDate" Margin="0,0,0,10"/>
+                        <TextBlock Text="단원 / 주제" Margin="0,0,0,3"/>
+                        <TextBox x:Name="txtUnit" Margin="0,0,0,10" Padding="5"/>
 
-                <TextBlock Text="메모" Margin="0,0,0,3"/>
-                <TextBox x:Name="txtMemo" Margin="0,0,0,15" Padding="5" Height="80"
-                         TextWrapping="Wrap" AcceptsReturn="True"
-                         VerticalScrollBarVisibility="Auto"/>
+                        <TextBlock Text="학습일" Margin="0,0,0,3"/>
+                        <DatePicker x:Name="dpStudyDate" Margin="0,0,0,10"/>
 
-                <Button x:Name="btnAdd" Content="등록" Height="38" Click="btnAdd_Click"
-                        Background="#3F51B5" Foreground="White" FontWeight="Bold"
-                        BorderThickness="0" Cursor="Hand"/>
-            </StackPanel>
-        </Border>
+                        <TextBlock Text="메모" Margin="0,0,0,3"/>
+                        <TextBox x:Name="txtMemo" Margin="0,0,0,15" Padding="5" Height="80"
+                                 TextWrapping="Wrap" AcceptsReturn="True"
+                                 VerticalScrollBarVisibility="Auto"/>
 
-        <!-- ===== 오른쪽: 등록된 학습 주제 목록 ===== -->
-        <DockPanel Grid.Column="1">
-            <TextBlock DockPanel.Dock="Top" Text="등록된 학습 주제"
-                       FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-            <DataGrid x:Name="dgTopics" AutoGenerateColumns="False" IsReadOnly="True"
-                      CanUserAddRows="False" HeadersVisibility="Column"
-                      GridLinesVisibility="Horizontal" RowHeight="32">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
-                    <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
-                    <DataGridTextColumn Header="학습일"
-                                        Binding="{Binding StudyDate, StringFormat=yyyy-MM-dd}" Width="100"/>
-                    <DataGridTextColumn Header="다음 복습일"
-                                        Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="100"/>
-                </DataGrid.Columns>
-            </DataGrid>
-        </DockPanel>
-    </Grid>
+                        <Button x:Name="btnAdd" Content="등록" Height="38" Click="btnAdd_Click"
+                                Background="#3F51B5" Foreground="White" FontWeight="Bold"
+                                BorderThickness="0" Cursor="Hand"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 오른쪽: 등록된 학습 주제 목록 -->
+                <DockPanel Grid.Column="1">
+                    <TextBlock DockPanel.Dock="Top" Text="등록된 학습 주제"
+                               FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <DataGrid x:Name="dgTopics" AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" HeadersVisibility="Column"
+                              GridLinesVisibility="Horizontal" RowHeight="32">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
+                            <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
+                            <DataGridTextColumn Header="학습일"
+                                                Binding="{Binding StudyDate, StringFormat=yyyy-MM-dd}" Width="95"/>
+                            <DataGridTextColumn Header="다음 복습일"
+                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="95"/>
+                            <DataGridTextColumn Header="반복"
+                                                Binding="{Binding RepetitionCount}" Width="45"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Grid>
+        </TabItem>
+
+        <!-- ============ 탭 2: 오늘의 복습 ============ -->
+        <TabItem Header="오늘의 복습">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="290"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 왼쪽: 오늘 복습할 항목 목록 -->
+                <DockPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock DockPanel.Dock="Top" x:Name="txtReviewCount"
+                               Text="오늘 복습할 항목" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <DataGrid x:Name="dgReview" AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" SelectionMode="Single"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="32"
+                              SelectionChanged="dgReview_SelectionChanged">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
+                            <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
+                            <DataGridTextColumn Header="복습 예정일"
+                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="100"/>
+                            <DataGridTextColumn Header="반복" Binding="{Binding RepetitionCount}" Width="45"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+
+                <!-- 오른쪽: 자가 평가 패널 -->
+                <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="자가 평가" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <TextBlock x:Name="txtSelected" Text="복습할 항목을 선택하세요."
+                                   TextWrapping="Wrap" Margin="0,0,0,15" Foreground="#555"/>
+                        <TextBlock Text="이번 복습, 얼마나 기억났나요?" Margin="0,0,0,10" FontWeight="Bold"/>
+
+                        <Button Content="5 - 완벽하게 기억남" Tag="5" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
+                        <Button Content="4 - 약간 머뭇거림"   Tag="4" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
+                        <Button Content="3 - 어렵게 기억함"   Tag="3" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
+                        <Button Content="2 - 가물가물 (실패)" Tag="2" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
+                        <Button Content="1 - 거의 못함 (실패)" Tag="1" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
+                        <Button Content="0 - 전혀 모름 (실패)" Tag="0" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </TabItem>
+
+        <!-- ============ 탭 3: 시험 D-Day ============ -->
+        <TabItem Header="시험 D-Day">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 왼쪽: 시험 등록 + 일정 생성 -->
+                <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="시험 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                        <TextBlock Text="과목" Margin="0,0,0,3"/>
+                        <TextBox x:Name="txtExamSubject" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="시험명" Margin="0,0,0,3"/>
+                        <TextBox x:Name="txtExamName" Margin="0,0,0,10" Padding="5"/>
+
+                        <TextBlock Text="시험일" Margin="0,0,0,3"/>
+                        <DatePicker x:Name="dpExamDate" Margin="0,0,0,15"/>
+
+                        <Button x:Name="btnAddExam" Content="시험 등록" Height="38" Click="btnAddExam_Click"
+                                Background="#3F51B5" Foreground="White" FontWeight="Bold"
+                                BorderThickness="0" Cursor="Hand" Margin="0,0,0,20"/>
+
+                        <Separator Margin="0,0,0,12"/>
+                        <TextBlock Text="목록에서 시험을 선택한 뒤 누르면, 해당 과목 학습 주제들의 복습 일정을 시험일 기준으로 재배치합니다."
+                                   TextWrapping="Wrap" Foreground="#555" Margin="0,0,0,8"/>
+                        <Button x:Name="btnGenPlan" Content="시험 대비 복습 일정 생성" Height="38" Click="btnGenPlan_Click"
+                                Background="#E91E63" Foreground="White" FontWeight="Bold"
+                                BorderThickness="0" Cursor="Hand"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 오른쪽: 시험 목록 (D-Day) -->
+                <DockPanel Grid.Column="1">
+                    <TextBlock DockPanel.Dock="Top" Text="등록된 시험"
+                               FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <DataGrid x:Name="dgExams" AutoGenerateColumns="False" IsReadOnly="True"
+                              CanUserAddRows="False" SelectionMode="Single"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="32">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="D-Day" Binding="{Binding DDayText}" Width="80"/>
+                            <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="110"/>
+                            <DataGridTextColumn Header="시험명" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="시험일"
+                                                Binding="{Binding ExamDate, StringFormat=yyyy-MM-dd}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Grid>
+        </TabItem>
+
+    </TabControl>
 </Window>
