@@ -1,0 +1,23 @@
+# Visual Studio / .NET 빌드 결과물 및 임시 파일
+.vs/
+bin/
+obj/
+
+# 사용자별 설정 파일
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# SQLite 로컬 DB 파일 (개인 데이터 — 올리지 않음)
+*.db
+*.db-shm
+*.db-wal
+
+# 빌드 캐시
+*.cache
+project.lock.json
