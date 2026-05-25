@@ -18,6 +18,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- 요약 카드 3개 -->
@@ -55,6 +56,14 @@
                         </StackPanel>
                     </Border>
                 </Grid>
+
+                <!-- 우하단 구석: 시연용 알림 트리거 버튼 (눈에 띄지 않게 작게) -->
+                <Button Grid.Row="2" x:Name="btnNotify" Content="🔔"
+                        Click="btnNotify_Click"
+                        ToolTip="지금 알림 받기 (시연용)"
+                        HorizontalAlignment="Right" Margin="0,8,0,0"
+                        Background="Transparent" BorderThickness="0"
+                        Foreground="#BBB" FontSize="14" Padding="6,2" Cursor="Hand"/>
 
                 <!-- 차트 2개 -->
                 <Grid Grid.Row="1">

@@ -7,6 +7,9 @@ using SkiaSharp;
 using StudyPlanner.Data;
 using StudyPlanner.Models;
 using StudyPlanner.Services;
+// WinForms 참조로 인한 이름 충돌 방지 (WPF 쪽 명시)
+using MessageBox = System.Windows.MessageBox;
+using Button = System.Windows.Controls.Button;
 
 namespace StudyPlanner
 {
@@ -18,9 +21,16 @@ namespace StudyPlanner
         // 자가 평가 대상으로 선택된 학습 주제의 Id
         private int? selectedTopicId = null;
 
+        // 트레이 아이콘 & 알림 서비스
+        private TrayNotificationService? trayService;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            // LiveCharts2 차트 텍스트 한글 깨짐 방지: 맑은 고딕을 전역 폰트로 지정
+            LiveCharts.Configure(config =>
+                config.HasGlobalSKTypeface(SKTypeface.FromFamilyName("Malgun Gothic")));
 
             // 프로그램 시작 시: DB 파일이 없으면 자동 생성
             using (var db = new StudyDbContext())
@@ -34,6 +44,49 @@ namespace StudyPlanner
             LoadReviewList();    // 오늘 복습할 항목 불러오기
             LoadExams();         // 시험 목록 불러오기
             LoadDashboard();     // 대시보드 통계/차트 갱신
+
+            // 트레이 아이콘 등록 (앱 실행 중 작업표시줄 트레이에 표시됨)
+            trayService = new TrayNotificationService(onOpenRequested: () =>
+            {
+                this.Show();
+                this.WindowState = WindowState.Normal;
+                this.Activate();
+            });
+
+            // 시작 시 오늘 복습할 항목이 있으면 자동 알림
+            ShowTodayReviewNotification();
+
+            // 창 닫힐 때 트레이 아이콘 정리
+            this.Closed += (s, e) => trayService?.Dispose();
+        }
+
+        // 오늘 복습할 항목 수를 트레이 알림으로 표시
+        private void ShowTodayReviewNotification()
+        {
+            using (var db = new StudyDbContext())
+            {
+                DateTime today = DateTime.Today;
+                int dueCount = db.StudyTopics.Count(t => t.NextReviewDate <= today);
+
+                if (dueCount > 0)
+                {
+                    trayService?.ShowNotification(
+                        "오늘의 복습",
+                        $"오늘 복습할 항목이 {dueCount}건 있습니다.");
+                }
+                else
+                {
+                    trayService?.ShowNotification(
+                        "오늘의 복습",
+                        "오늘 복습할 항목이 없습니다. 새 주제를 학습해보세요!");
+                }
+            }
+        }
+
+        // [지금 알림 받기] 버튼 클릭 — 즉시 트레이 알림 표시 (시연/테스트용)
+        private void btnNotify_Click(object sender, RoutedEventArgs e)
+        {
+            ShowTodayReviewNotification();
         }
 
         // DB에서 전체 학습 주제 목록을 불러와 표시 (학습 주제 탭)
