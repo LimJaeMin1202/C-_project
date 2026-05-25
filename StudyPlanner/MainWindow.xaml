@@ -5,10 +5,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StudyPlanner"
         xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="망각곡선 학습 플래너" Height="600" Width="950"
+        Title="망각곡선 학습 플래너" Height="720" Width="1080"
         WindowStartupLocation="CenterScreen"
-        FontFamily="맑은 고딕" FontSize="14">
+        FontFamily="맑은 고딕" FontSize="14"
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto">
 
     <TabControl Margin="10">
 
@@ -29,7 +35,8 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#3F51B5" CornerRadius="8" Padding="20" Margin="0,0,8,0">
+                    <materialDesign:Card Grid.Column="0" Background="#3F51B5" UniformCornerRadius="8"
+                                         Padding="20" Margin="0,0,8,0">
                         <StackPanel>
                             <TextBlock Text="학습 주제" Foreground="White" FontSize="14" Opacity="0.85"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -39,9 +46,10 @@
                                            VerticalAlignment="Bottom" Margin="6,0,0,9"/>
                             </StackPanel>
                         </StackPanel>
-                    </Border>
+                    </materialDesign:Card>
 
-                    <Border Grid.Column="1" Background="#E91E63" CornerRadius="8" Padding="20" Margin="4,0,4,0">
+                    <materialDesign:Card Grid.Column="1" Background="#E91E63" UniformCornerRadius="8"
+                                         Padding="20" Margin="4,0,4,0">
                         <StackPanel>
                             <TextBlock Text="오늘 복습" Foreground="White" FontSize="14" Opacity="0.85"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -51,9 +59,10 @@
                                            VerticalAlignment="Bottom" Margin="6,0,0,9"/>
                             </StackPanel>
                         </StackPanel>
-                    </Border>
+                    </materialDesign:Card>
 
-                    <Border Grid.Column="2" Background="#009688" CornerRadius="8" Padding="20" Margin="8,0,0,0">
+                    <materialDesign:Card Grid.Column="2" Background="#009688" UniformCornerRadius="8"
+                                         Padding="20" Margin="8,0,0,0">
                         <StackPanel>
                             <TextBlock Text="다가오는 시험" Foreground="White" FontSize="14" Opacity="0.85"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
@@ -65,16 +74,18 @@
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </StackPanel>
-                    </Border>
+                    </materialDesign:Card>
                 </Grid>
 
-                <!-- 우하단 구석: 시연용 알림 트리거 버튼 (눈에 띄지 않게 작게) -->
-                <Button Grid.Row="2" x:Name="btnNotify" Content="🔔"
+                <!-- 우하단 구석: 시연용 알림 트리거 (작은 종 아이콘 버튼) -->
+                <Button Grid.Row="2" x:Name="btnNotify"
                         Click="btnNotify_Click"
+                        Style="{StaticResource MaterialDesignIconButton}"
                         ToolTip="지금 알림 받기 (시연용)"
                         HorizontalAlignment="Right" Margin="0,8,0,0"
-                        Background="Transparent" BorderThickness="0"
-                        Foreground="#BBB" FontSize="14" Padding="6,2" Cursor="Hand"/>
+                        Foreground="#999">
+                    <materialDesign:PackIcon Kind="BellOutline" Width="20" Height="20"/>
+                </Button>
 
                 <!-- 차트 2개 -->
                 <Grid Grid.Row="1">
@@ -83,7 +94,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                    <materialDesign:Card Grid.Column="0" UniformCornerRadius="8" Padding="14" Margin="0,0,8,0">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="과목별 학습 주제 분포"
                                        FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
@@ -93,9 +104,9 @@
                                        TextWrapping="Wrap"/>
                             <lvc:CartesianChart x:Name="chartSubject"/>
                         </DockPanel>
-                    </Border>
+                    </materialDesign:Card>
 
-                    <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="12" Margin="8,0,0,0">
+                    <materialDesign:Card Grid.Column="1" UniformCornerRadius="8" Padding="14" Margin="8,0,0,0">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="향후 14일 복습 일정"
                                        FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
@@ -105,7 +116,7 @@
                                        TextWrapping="Wrap"/>
                             <lvc:CartesianChart x:Name="chartSchedule"/>
                         </DockPanel>
-                    </Border>
+                    </materialDesign:Card>
                 </Grid>
             </Grid>
         </TabItem>
@@ -114,51 +125,66 @@
         <TabItem Header="학습 주제">
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="320"/>
+                    <ColumnDefinition Width="340"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- 왼쪽: 학습 주제 입력 폼 -->
-                <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <materialDesign:Card Grid.Column="0" UniformCornerRadius="8" Padding="20" Margin="0,0,10,0">
                     <StackPanel>
-                        <TextBlock Text="학습 주제 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <TextBlock Text="학습 주제 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,18"/>
 
-                        <TextBlock Text="과목" Margin="0,0,0,3"/>
-                        <TextBox x:Name="txtSubject" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtSubject"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="과목"
+                                 Margin="0,0,0,14"/>
 
-                        <TextBlock Text="단원 / 주제" Margin="0,0,0,3"/>
-                        <TextBox x:Name="txtUnit" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtUnit"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="단원 / 주제"
+                                 Margin="0,0,0,14"/>
 
-                        <TextBlock Text="학습일" Margin="0,0,0,3"/>
-                        <DatePicker x:Name="dpStudyDate" Margin="0,0,0,10"/>
+                        <DatePicker x:Name="dpStudyDate"
+                                    Style="{StaticResource MaterialDesignFilledDatePicker}"
+                                    materialDesign:HintAssist.Hint="학습일"
+                                    Margin="0,0,0,14"/>
 
-                        <TextBlock Text="메모" Margin="0,0,0,3"/>
-                        <TextBox x:Name="txtMemo" Margin="0,0,0,15" Padding="5" Height="80"
+                        <TextBox x:Name="txtMemo"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="메모"
+                                 Margin="0,0,0,20" Height="92"
                                  TextWrapping="Wrap" AcceptsReturn="True"
                                  VerticalScrollBarVisibility="Auto"/>
 
-                        <Button x:Name="btnAdd" Content="등록" Height="38" Click="btnAdd_Click"
-                                Background="#3F51B5" Foreground="White" FontWeight="Bold"
-                                BorderThickness="0" Cursor="Hand"/>
+                        <Button x:Name="btnAdd" Click="btnAdd_Click"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Height="42">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="등록"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                </Border>
+                </materialDesign:Card>
 
                 <!-- 오른쪽: 등록된 학습 주제 목록 -->
                 <DockPanel Grid.Column="1">
                     <TextBlock DockPanel.Dock="Top" Text="등록된 학습 주제"
                                FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                    <DataGrid x:Name="dgTopics" AutoGenerateColumns="False" IsReadOnly="True"
+                    <DataGrid x:Name="dgTopics"
+                              Style="{StaticResource MaterialDesignDataGrid}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserAddRows="False" HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal" RowHeight="32">
+                              GridLinesVisibility="Horizontal" RowHeight="36">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
                             <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
                             <DataGridTextColumn Header="학습일"
-                                                Binding="{Binding StudyDate, StringFormat=yyyy-MM-dd}" Width="95"/>
+                                                Binding="{Binding StudyDate, StringFormat=yyyy-MM-dd}" Width="100"/>
                             <DataGridTextColumn Header="다음 복습일"
-                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="95"/>
+                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="100"/>
                             <DataGridTextColumn Header="반복"
-                                                Binding="{Binding RepetitionCount}" Width="45"/>
+                                                Binding="{Binding RepetitionCount}" Width="50"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -170,43 +196,64 @@
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="290"/>
+                    <ColumnDefinition Width="310"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- 왼쪽: 오늘 복습할 항목 목록 -->
                 <DockPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock DockPanel.Dock="Top" x:Name="txtReviewCount"
                                Text="오늘 복습할 항목" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                    <DataGrid x:Name="dgReview" AutoGenerateColumns="False" IsReadOnly="True"
+                    <DataGrid x:Name="dgReview"
+                              Style="{StaticResource MaterialDesignDataGrid}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserAddRows="False" SelectionMode="Single"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="32"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="36"
                               SelectionChanged="dgReview_SelectionChanged">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
                             <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
                             <DataGridTextColumn Header="복습 예정일"
-                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="100"/>
-                            <DataGridTextColumn Header="반복" Binding="{Binding RepetitionCount}" Width="45"/>
+                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="110"/>
+                            <DataGridTextColumn Header="반복" Binding="{Binding RepetitionCount}" Width="50"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
 
                 <!-- 오른쪽: 자가 평가 패널 -->
-                <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="15">
+                <materialDesign:Card Grid.Column="1" UniformCornerRadius="8" Padding="18">
                     <StackPanel>
-                        <TextBlock Text="자가 평가" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <TextBlock Text="자가 평가" FontSize="18" FontWeight="Bold" Margin="0,0,0,8"/>
                         <TextBlock x:Name="txtSelected" Text="복습할 항목을 선택하세요."
-                                   TextWrapping="Wrap" Margin="0,0,0,15" Foreground="#555"/>
-                        <TextBlock Text="이번 복습, 얼마나 기억났나요?" Margin="0,0,0,10" FontWeight="Bold"/>
+                                   TextWrapping="Wrap" Margin="0,0,0,16" Foreground="#666"/>
+                        <TextBlock Text="이번 복습, 얼마나 기억났나요?"
+                                   Margin="0,0,0,10" FontWeight="Bold"/>
 
-                        <Button Content="5 - 완벽하게 기억남" Tag="5" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
-                        <Button Content="4 - 약간 머뭇거림"   Tag="4" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
-                        <Button Content="3 - 어렵게 기억함"   Tag="3" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
-                        <Button Content="2 - 가물가물 (실패)" Tag="2" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
-                        <Button Content="1 - 거의 못함 (실패)" Tag="1" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
-                        <Button Content="0 - 전혀 모름 (실패)" Tag="0" Click="btnRate_Click" Margin="0,0,0,5" Height="32"/>
+                        <Button Content="5 — 완벽하게 기억남" Tag="5" Click="btnRate_Click"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,6" Height="36"
+                                HorizontalContentAlignment="Left" Padding="14,0"/>
+                        <Button Content="4 — 약간 머뭇거림" Tag="4" Click="btnRate_Click"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,6" Height="36"
+                                HorizontalContentAlignment="Left" Padding="14,0"/>
+                        <Button Content="3 — 어렵게 기억함" Tag="3" Click="btnRate_Click"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,6" Height="36"
+                                HorizontalContentAlignment="Left" Padding="14,0"/>
+                        <Button Content="2 — 가물가물 (실패)" Tag="2" Click="btnRate_Click"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,6" Height="36"
+                                HorizontalContentAlignment="Left" Padding="14,0"/>
+                        <Button Content="1 — 거의 못함 (실패)" Tag="1" Click="btnRate_Click"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,6" Height="36"
+                                HorizontalContentAlignment="Left" Padding="14,0"/>
+                        <Button Content="0 — 전혀 모름 (실패)" Tag="0" Click="btnRate_Click"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Margin="0,0,0,6" Height="36"
+                                HorizontalContentAlignment="Left" Padding="14,0"/>
                     </StackPanel>
-                </Border>
+                </materialDesign:Card>
             </Grid>
         </TabItem>
 
@@ -214,50 +261,69 @@
         <TabItem Header="시험 D-Day">
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="300"/>
+                    <ColumnDefinition Width="340"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- 왼쪽: 시험 등록 + 일정 생성 -->
-                <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="15" Margin="0,0,10,0">
+                <materialDesign:Card Grid.Column="0" UniformCornerRadius="8" Padding="20" Margin="0,0,10,0">
                     <StackPanel>
-                        <TextBlock Text="시험 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <TextBlock Text="시험 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,18"/>
 
-                        <TextBlock Text="과목" Margin="0,0,0,3"/>
-                        <TextBox x:Name="txtExamSubject" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtExamSubject"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="과목"
+                                 Margin="0,0,0,14"/>
 
-                        <TextBlock Text="시험명" Margin="0,0,0,3"/>
-                        <TextBox x:Name="txtExamName" Margin="0,0,0,10" Padding="5"/>
+                        <TextBox x:Name="txtExamName"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="시험명 (예: 중간고사)"
+                                 Margin="0,0,0,14"/>
 
-                        <TextBlock Text="시험일" Margin="0,0,0,3"/>
-                        <DatePicker x:Name="dpExamDate" Margin="0,0,0,15"/>
+                        <DatePicker x:Name="dpExamDate"
+                                    Style="{StaticResource MaterialDesignFilledDatePicker}"
+                                    materialDesign:HintAssist.Hint="시험일"
+                                    Margin="0,0,0,18"/>
 
-                        <Button x:Name="btnAddExam" Content="시험 등록" Height="38" Click="btnAddExam_Click"
-                                Background="#3F51B5" Foreground="White" FontWeight="Bold"
-                                BorderThickness="0" Cursor="Hand" Margin="0,0,0,20"/>
+                        <Button x:Name="btnAddExam" Click="btnAddExam_Click"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Height="42" Margin="0,0,0,20">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="CalendarPlus" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="시험 등록"/>
+                            </StackPanel>
+                        </Button>
 
                         <Separator Margin="0,0,0,12"/>
                         <TextBlock Text="목록에서 시험을 선택한 뒤 누르면, 해당 과목 학습 주제들의 복습 일정을 시험일 기준으로 재배치합니다."
-                                   TextWrapping="Wrap" Foreground="#555" Margin="0,0,0,8"/>
-                        <Button x:Name="btnGenPlan" Content="시험 대비 복습 일정 생성" Height="38" Click="btnGenPlan_Click"
-                                Background="#E91E63" Foreground="White" FontWeight="Bold"
-                                BorderThickness="0" Cursor="Hand"/>
+                                   TextWrapping="Wrap" Foreground="#666" FontSize="12" Margin="0,0,0,10"/>
+
+                        <Button x:Name="btnGenPlan" Click="btnGenPlan_Click"
+                                Style="{StaticResource MaterialDesignRaisedSecondaryButton}"
+                                Height="42">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="CalendarClock" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="시험 대비 복습 일정 생성"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
-                </Border>
+                </materialDesign:Card>
 
                 <!-- 오른쪽: 시험 목록 (D-Day) -->
                 <DockPanel Grid.Column="1">
                     <TextBlock DockPanel.Dock="Top" Text="등록된 시험"
                                FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                    <DataGrid x:Name="dgExams" AutoGenerateColumns="False" IsReadOnly="True"
+                    <DataGrid x:Name="dgExams"
+                              Style="{StaticResource MaterialDesignDataGrid}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserAddRows="False" SelectionMode="Single"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="32">
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="36">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="D-Day" Binding="{Binding DDayText}" Width="80"/>
-                            <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="110"/>
+                            <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="120"/>
                             <DataGridTextColumn Header="시험명" Binding="{Binding Name}" Width="*"/>
                             <DataGridTextColumn Header="시험일"
-                                                Binding="{Binding ExamDate, StringFormat=yyyy-MM-dd}" Width="100"/>
+                                                Binding="{Binding ExamDate, StringFormat=yyyy-MM-dd}" Width="110"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
