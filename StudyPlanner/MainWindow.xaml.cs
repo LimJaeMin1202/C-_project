@@ -1,5 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
+using SkiaSharp;
 using StudyPlanner.Data;
 using StudyPlanner.Models;
 using StudyPlanner.Services;
@@ -29,6 +33,7 @@ namespace StudyPlanner
             LoadTopics();        // 학습 주제 목록 불러오기
             LoadReviewList();    // 오늘 복습할 항목 불러오기
             LoadExams();         // 시험 목록 불러오기
+            LoadDashboard();     // 대시보드 통계/차트 갱신
         }
 
         // DB에서 전체 학습 주제 목록을 불러와 표시 (학습 주제 탭)
@@ -100,6 +105,7 @@ namespace StudyPlanner
             dpStudyDate.SelectedDate = DateTime.Today;
             LoadTopics();
             LoadReviewList();
+            LoadDashboard();
         }
 
         // 오늘의 복습 목록에서 항목을 선택했을 때
@@ -152,6 +158,7 @@ namespace StudyPlanner
             txtSelected.Text = "복습할 항목을 선택하세요.";
             LoadTopics();
             LoadReviewList();
+            LoadDashboard();
         }
 
         // ===================== 시험 D-Day =====================
@@ -200,6 +207,7 @@ namespace StudyPlanner
             txtExamName.Clear();
             dpExamDate.SelectedDate = DateTime.Today.AddDays(14);
             LoadExams();
+            LoadDashboard();
         }
 
         // [시험 대비 복습 일정 생성] 버튼 클릭 — D-Day 역산
@@ -252,10 +260,120 @@ namespace StudyPlanner
 
             LoadTopics();
             LoadReviewList();
+            LoadDashboard();
             MessageBox.Show(
                 $"'{exam.Subject}' 시험({exam.DDayText}) 대비 복습 일정을 생성했습니다.\n" +
                 $"학습 주제 탭에서 다음 복습일이 시험일 기준으로 재배치된 것을 확인하세요.",
                 "일정 생성 완료", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // ===================== 대시보드 =====================
+
+        // 요약 카드와 차트(과목별 분포, 망각곡선)를 갱신한다.
+        private void LoadDashboard()
+        {
+            using (var db = new StudyDbContext())
+            {
+                var topics = db.StudyTopics.ToList();
+                var exams = db.Exams.ToList();
+                var today = DateTime.Today;
+
+                // ── 요약 카드 ──
+                txtTotalTopics.Text = topics.Count.ToString();
+                txtTodayReview.Text = topics.Count(t => t.NextReviewDate <= today).ToString();
+                var nextExam = exams.Where(e => e.ExamDate >= today)
+                                    .OrderBy(e => e.ExamDate)
+                                    .FirstOrDefault();
+                txtNextExam.Text = nextExam != null
+                    ? $"{nextExam.Subject}\n{nextExam.DDayText}"
+                    : "등록된 시험 없음";
+
+                // ── 차트 1: 과목별 학습 주제 수 (막대) ──
+                var bySubject = topics.GroupBy(t => t.Subject)
+                                      .Select(g => new { Subject = g.Key, Count = g.Count() })
+                                      .OrderByDescending(x => x.Count)
+                                      .ToList();
+
+                chartSubject.Series = new ISeries[]
+                {
+                    new ColumnSeries<int>
+                    {
+                        Values = bySubject.Select(x => x.Count).ToArray(),
+                        Name = "주제 수",
+                        Fill = new SolidColorPaint(SKColors.MediumSlateBlue)
+                    }
+                };
+                chartSubject.XAxes = new[]
+                {
+                    new Axis
+                    {
+                        Labels = bySubject.Select(x => x.Subject).ToArray(),
+                        LabelsRotation = 0
+                    }
+                };
+                chartSubject.YAxes = new[]
+                {
+                    new Axis { MinLimit = 0, MinStep = 1 }
+                };
+
+                // ── 차트 2: 망각곡선 (SM-2 복습 효과 시연) ──
+                // 35일 동안: ① 복습 없으면 빠르게 감쇠 ② SM-2 복습 시 톱니 모양으로 회복+안정성 증가
+                int totalDays = 35;
+                int[] reviewDays = { 1, 6, 15, 30 };  // SM-2 누적 복습일 (대략)
+
+                double[] noReviewY = new double[totalDays + 1];
+                double[] withReviewY = new double[totalDays + 1];
+                double currentS = 0.7;        // 초기 기억 안정성(낮음)
+                double stabilityGrowth = 2.2; // 복습 성공 시 안정성 증가 배율
+                int lastReview = 0;
+
+                for (int day = 0; day <= totalDays; day++)
+                {
+                    // 복습 안 함: 처음의 낮은 안정성으로 계속 감쇠
+                    noReviewY[day] = Math.Exp(-day / 0.7);
+
+                    // SM-2 복습: 복습일에는 R=1로 회복, 안정성도 점점 증가
+                    if (reviewDays.Contains(day))
+                    {
+                        withReviewY[day] = 1.0;
+                        lastReview = day;
+                        currentS *= stabilityGrowth;
+                    }
+                    else
+                    {
+                        int t = day - lastReview;
+                        withReviewY[day] = Math.Min(Math.Exp(-t / currentS), 1.0);
+                    }
+                }
+
+                chartForget.Series = new ISeries[]
+                {
+                    new LineSeries<double>
+                    {
+                        Values = noReviewY,
+                        Name = "복습 안 함",
+                        Fill = null,
+                        GeometrySize = 0,
+                        Stroke = new SolidColorPaint(SKColors.Tomato) { StrokeThickness = 2 }
+                    },
+                    new LineSeries<double>
+                    {
+                        Values = withReviewY,
+                        Name = "SM-2 복습",
+                        Fill = null,
+                        GeometrySize = 4,
+                        Stroke = new SolidColorPaint(SKColors.MediumSeaGreen) { StrokeThickness = 2 }
+                    }
+                };
+                chartForget.XAxes = new[]
+                {
+                    new Axis { Name = "경과 일수", MinLimit = 0, MaxLimit = totalDays }
+                };
+                chartForget.YAxes = new[]
+                {
+                    new Axis { Name = "기억 보존율", MinLimit = 0, MaxLimit = 1.05 }
+                };
+            }
         }
     }
 }

@@ -4,12 +4,83 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:StudyPlanner"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
         mc:Ignorable="d"
         Title="망각곡선 학습 플래너" Height="600" Width="950"
         WindowStartupLocation="CenterScreen"
         FontFamily="맑은 고딕" FontSize="14">
 
     <TabControl Margin="10">
+
+        <!-- ============ 탭 0: 대시보드 ============ -->
+        <TabItem Header="대시보드">
+            <Grid Margin="15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 요약 카드 3개 -->
+                <Grid Grid.Row="0" Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="#3F51B5" CornerRadius="8" Padding="20" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="학습 주제" Foreground="White" FontSize="14" Opacity="0.85"/>
+                            <TextBlock x:Name="txtTotalTopics" Text="0" Foreground="White"
+                                       FontSize="38" FontWeight="Bold"/>
+                            <TextBlock Text="개 등록됨" Foreground="White" FontSize="12" Opacity="0.85"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Background="#E91E63" CornerRadius="8" Padding="20" Margin="4,0,4,0">
+                        <StackPanel>
+                            <TextBlock Text="오늘 복습" Foreground="White" FontSize="14" Opacity="0.85"/>
+                            <TextBlock x:Name="txtTodayReview" Text="0" Foreground="White"
+                                       FontSize="38" FontWeight="Bold"/>
+                            <TextBlock Text="건 예정" Foreground="White" FontSize="12" Opacity="0.85"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Background="#009688" CornerRadius="8" Padding="20" Margin="8,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="다가오는 시험" Foreground="White" FontSize="14" Opacity="0.85"/>
+                            <TextBlock x:Name="txtNextExam" Text="없음" Foreground="White"
+                                       FontSize="22" FontWeight="Bold" Margin="0,8,0,4"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 차트 2개 -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="과목별 학습 주제 분포"
+                                       FontSize="15" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <lvc:CartesianChart x:Name="chartSubject"/>
+                        </DockPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="12" Margin="8,0,0,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="망각곡선 — SM-2 복습 효과 시연"
+                                       FontSize="15" FontWeight="Bold" Margin="0,0,0,10"/>
+                            <lvc:CartesianChart x:Name="chartForget"/>
+                        </DockPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </TabItem>
 
         <!-- ============ 탭 1: 학습 주제 ============ -->
         <TabItem Header="학습 주제">
