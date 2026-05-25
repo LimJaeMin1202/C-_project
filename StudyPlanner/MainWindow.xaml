@@ -32,27 +32,38 @@
                     <Border Grid.Column="0" Background="#3F51B5" CornerRadius="8" Padding="20" Margin="0,0,8,0">
                         <StackPanel>
                             <TextBlock Text="학습 주제" Foreground="White" FontSize="14" Opacity="0.85"/>
-                            <TextBlock x:Name="txtTotalTopics" Text="0" Foreground="White"
-                                       FontSize="38" FontWeight="Bold"/>
-                            <TextBlock Text="개 등록됨" Foreground="White" FontSize="12" Opacity="0.85"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtTotalTopics" Text="0" Foreground="White"
+                                           FontSize="38" FontWeight="Bold"/>
+                                <TextBlock Text="개 등록됨" Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="6,0,0,9"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
                     <Border Grid.Column="1" Background="#E91E63" CornerRadius="8" Padding="20" Margin="4,0,4,0">
                         <StackPanel>
                             <TextBlock Text="오늘 복습" Foreground="White" FontSize="14" Opacity="0.85"/>
-                            <TextBlock x:Name="txtTodayReview" Text="0" Foreground="White"
-                                       FontSize="38" FontWeight="Bold"/>
-                            <TextBlock Text="건 예정" Foreground="White" FontSize="12" Opacity="0.85"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtTodayReview" Text="0" Foreground="White"
+                                           FontSize="38" FontWeight="Bold"/>
+                                <TextBlock Text="건 예정" Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="6,0,0,9"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 
                     <Border Grid.Column="2" Background="#009688" CornerRadius="8" Padding="20" Margin="8,0,0,0">
                         <StackPanel>
                             <TextBlock Text="다가오는 시험" Foreground="White" FontSize="14" Opacity="0.85"/>
-                            <TextBlock x:Name="txtNextExam" Text="없음" Foreground="White"
-                                       FontSize="22" FontWeight="Bold" Margin="0,8,0,4"
-                                       TextWrapping="Wrap"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtNextExamDay" Text="—" Foreground="White"
+                                           FontSize="38" FontWeight="Bold"/>
+                                <TextBlock x:Name="txtNextExamLabel" Text="등록된 시험 없음"
+                                           Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="6,0,0,9"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -75,16 +86,24 @@
                     <Border Grid.Column="0" Background="#F5F5F5" CornerRadius="8" Padding="12" Margin="0,0,8,0">
                         <DockPanel>
                             <TextBlock DockPanel.Dock="Top" Text="과목별 학습 주제 분포"
-                                       FontSize="15" FontWeight="Bold" Margin="0,0,0,10"/>
+                                       FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="등록한 학습 주제를 과목별로 묶어서 보여줍니다."
+                                       FontSize="11" Foreground="#666" Margin="0,0,0,8"
+                                       TextWrapping="Wrap"/>
                             <lvc:CartesianChart x:Name="chartSubject"/>
                         </DockPanel>
                     </Border>
 
                     <Border Grid.Column="1" Background="#F5F5F5" CornerRadius="8" Padding="12" Margin="8,0,0,0">
                         <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="망각곡선 — SM-2 복습 효과 시연"
-                                       FontSize="15" FontWeight="Bold" Margin="0,0,0,10"/>
-                            <lvc:CartesianChart x:Name="chartForget"/>
+                            <TextBlock DockPanel.Dock="Top" Text="향후 14일 복습 일정"
+                                       FontSize="15" FontWeight="Bold" Margin="0,0,0,2"/>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="다음 2주간 매일 몇 개의 주제를 복습해야 하는지 보여줍니다. SM-2 알고리즘이 자동으로 분산해 배치합니다."
+                                       FontSize="11" Foreground="#666" Margin="0,0,0,8"
+                                       TextWrapping="Wrap"/>
+                            <lvc:CartesianChart x:Name="chartSchedule"/>
                         </DockPanel>
                     </Border>
                 </Grid>

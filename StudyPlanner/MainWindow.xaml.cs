@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using LiveChartsCore;
+using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
@@ -334,12 +335,21 @@ namespace StudyPlanner
                 // ── 요약 카드 ──
                 txtTotalTopics.Text = topics.Count.ToString();
                 txtTodayReview.Text = topics.Count(t => t.NextReviewDate <= today).ToString();
+
                 var nextExam = exams.Where(e => e.ExamDate >= today)
                                     .OrderBy(e => e.ExamDate)
                                     .FirstOrDefault();
-                txtNextExam.Text = nextExam != null
-                    ? $"{nextExam.Subject}\n{nextExam.DDayText}"
-                    : "등록된 시험 없음";
+                if (nextExam == null)
+                {
+                    txtNextExamDay.Text = "—";
+                    txtNextExamLabel.Text = "등록된 시험 없음";
+                }
+                else
+                {
+                    int dday = (nextExam.ExamDate.Date - today).Days;
+                    txtNextExamDay.Text = dday == 0 ? "D-DAY" : $"D-{dday}";
+                    txtNextExamLabel.Text = nextExam.Subject;
+                }
 
                 // ── 차트 1: 과목별 학습 주제 수 (막대) ──
                 var bySubject = topics.GroupBy(t => t.Subject)
@@ -347,13 +357,14 @@ namespace StudyPlanner
                                       .OrderByDescending(x => x.Count)
                                       .ToList();
 
+                chartSubject.LegendPosition = LegendPosition.Hidden;
+                chartSubject.TooltipPosition = TooltipPosition.Top;
                 chartSubject.Series = new ISeries[]
                 {
                     new ColumnSeries<int>
                     {
                         Values = bySubject.Select(x => x.Count).ToArray(),
-                        Name = "주제 수",
-                        Fill = new SolidColorPaint(SKColors.MediumSlateBlue)
+                        Fill = new SolidColorPaint(new SKColor(63, 81, 181))  // 앱 메인 색
                     }
                 };
                 chartSubject.XAxes = new[]
@@ -366,65 +377,61 @@ namespace StudyPlanner
                 };
                 chartSubject.YAxes = new[]
                 {
-                    new Axis { MinLimit = 0, MinStep = 1 }
+                    new Axis
+                    {
+                        MinLimit = 0,
+                        MinStep = 1,
+                        Labeler = v => $"{v:F0}개"
+                    }
                 };
 
-                // ── 차트 2: 망각곡선 (SM-2 복습 효과 시연) ──
-                // 35일 동안: ① 복습 없으면 빠르게 감쇠 ② SM-2 복습 시 톱니 모양으로 회복+안정성 증가
-                int totalDays = 35;
-                int[] reviewDays = { 1, 6, 15, 30 };  // SM-2 누적 복습일 (대략)
-
-                double[] noReviewY = new double[totalDays + 1];
-                double[] withReviewY = new double[totalDays + 1];
-                double currentS = 0.7;        // 초기 기억 안정성(낮음)
-                double stabilityGrowth = 2.2; // 복습 성공 시 안정성 증가 배율
-                int lastReview = 0;
-
-                for (int day = 0; day <= totalDays; day++)
+                // ── 차트 2: 향후 14일 복습 일정 ──
+                // 본인 데이터 기반: NextReviewDate가 앞으로 N일 안에 있는 주제를 일별로 카운트
+                int scheduleDays = 14;
+                int[] reviewsByDay = new int[scheduleDays];
+                foreach (var t in topics)
                 {
-                    // 복습 안 함: 처음의 낮은 안정성으로 계속 감쇠
-                    noReviewY[day] = Math.Exp(-day / 0.7);
-
-                    // SM-2 복습: 복습일에는 R=1로 회복, 안정성도 점점 증가
-                    if (reviewDays.Contains(day))
-                    {
-                        withReviewY[day] = 1.0;
-                        lastReview = day;
-                        currentS *= stabilityGrowth;
-                    }
-                    else
-                    {
-                        int t = day - lastReview;
-                        withReviewY[day] = Math.Min(Math.Exp(-t / currentS), 1.0);
-                    }
+                    int delta = (t.NextReviewDate.Date - today).Days;
+                    if (delta >= 0 && delta < scheduleDays)
+                        reviewsByDay[delta]++;
                 }
 
-                chartForget.Series = new ISeries[]
+                string[] dayLabels = Enumerable.Range(0, scheduleDays)
+                    .Select(i =>
+                    {
+                        if (i == 0) return "오늘";
+                        if (i == 1) return "내일";
+                        return today.AddDays(i).ToString("M/d");
+                    })
+                    .ToArray();
+
+                chartSchedule.LegendPosition = LegendPosition.Hidden;
+                chartSchedule.TooltipPosition = TooltipPosition.Top;
+
+                chartSchedule.Series = new ISeries[]
                 {
-                    new LineSeries<double>
+                    new ColumnSeries<int>
                     {
-                        Values = noReviewY,
-                        Name = "복습 안 함",
-                        Fill = null,
-                        GeometrySize = 0,
-                        Stroke = new SolidColorPaint(SKColors.Tomato) { StrokeThickness = 2 }
-                    },
-                    new LineSeries<double>
-                    {
-                        Values = withReviewY,
-                        Name = "SM-2 복습",
-                        Fill = null,
-                        GeometrySize = 4,
-                        Stroke = new SolidColorPaint(SKColors.MediumSeaGreen) { StrokeThickness = 2 }
+                        Values = reviewsByDay,
+                        Fill = new SolidColorPaint(new SKColor(76, 175, 80))  // 초록 (복습 = 학습 활동)
                     }
                 };
-                chartForget.XAxes = new[]
+                chartSchedule.XAxes = new[]
                 {
-                    new Axis { Name = "경과 일수", MinLimit = 0, MaxLimit = totalDays }
+                    new Axis
+                    {
+                        Labels = dayLabels,
+                        LabelsRotation = 0
+                    }
                 };
-                chartForget.YAxes = new[]
+                chartSchedule.YAxes = new[]
                 {
-                    new Axis { Name = "기억 보존율", MinLimit = 0, MaxLimit = 1.05 }
+                    new Axis
+                    {
+                        MinLimit = 0,
+                        MinStep = 1,
+                        Labeler = v => $"{v:F0}개"   // 'N개' 형태로 표시 (가로로 자연스럽게 읽힘)
+                    }
                 };
             }
         }
