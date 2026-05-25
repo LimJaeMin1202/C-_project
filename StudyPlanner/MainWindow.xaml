@@ -19,7 +19,13 @@
     <TabControl Margin="10">
 
         <!-- ============ 탭 0: 대시보드 ============ -->
-        <TabItem Header="대시보드">
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ViewDashboardOutline" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="대시보드" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
             <Grid Margin="15">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -122,7 +128,13 @@
         </TabItem>
 
         <!-- ============ 탭 1: 학습 주제 ============ -->
-        <TabItem Header="학습 주제">
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="BookOpenPageVariantOutline" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="학습 주제" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="340"/>
@@ -169,22 +181,71 @@
 
                 <!-- 오른쪽: 등록된 학습 주제 목록 -->
                 <DockPanel Grid.Column="1">
-                    <TextBlock DockPanel.Dock="Top" Text="등록된 학습 주제"
-                               FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <TextBlock Text="등록된 학습 주제" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Text="행 더블클릭 = 편집  ·  휴지통 = 삭제"
+                                   FontSize="11" Foreground="#888"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                    </Grid>
+
+                    <!-- 검색 + 과목 필터 + 초기화 -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="txtSearch" Grid.Column="0"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="과목 · 단원 · 메모 검색"
+                                 materialDesign:TextFieldAssist.HasClearButton="True"
+                                 Margin="0,0,8,0"
+                                 TextChanged="txtSearch_TextChanged"/>
+                        <ComboBox x:Name="cmbSubjectFilter" Grid.Column="1"
+                                  Style="{StaticResource MaterialDesignFilledComboBox}"
+                                  materialDesign:HintAssist.Hint="과목 필터"
+                                  Margin="0,0,8,0"
+                                  SelectionChanged="cmbSubjectFilter_SelectionChanged"/>
+                        <Button Grid.Column="2" Click="btnClearFilter_Click"
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                ToolTip="필터 초기화"
+                                VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="FilterRemoveOutline" Width="20" Height="20"/>
+                        </Button>
+                        <TextBlock x:Name="txtFilterResultCount" Grid.Column="3"
+                                   VerticalAlignment="Center" Margin="6,0,0,0"
+                                   FontSize="12" Foreground="#666"/>
+                    </Grid>
+
                     <DataGrid x:Name="dgTopics"
                               Style="{StaticResource MaterialDesignDataGrid}"
                               AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserAddRows="False" HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal" RowHeight="36">
+                              GridLinesVisibility="Horizontal" RowHeight="40"
+                              MouseDoubleClick="dgTopics_MouseDoubleClick">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
                             <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
                             <DataGridTextColumn Header="학습일"
-                                                Binding="{Binding StudyDate, StringFormat=yyyy-MM-dd}" Width="100"/>
+                                                Binding="{Binding StudyDate, StringFormat=yyyy/MM/dd}" Width="100"/>
                             <DataGridTextColumn Header="다음 복습일"
-                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="100"/>
+                                                Binding="{Binding NextReviewDate, StringFormat=yyyy/MM/dd}" Width="100"/>
                             <DataGridTextColumn Header="반복"
                                                 Binding="{Binding RepetitionCount}" Width="50"/>
+                            <DataGridTemplateColumn Header="" Width="44">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                Click="btnDeleteTopic_Click"
+                                                ToolTip="삭제"
+                                                Padding="2" Width="32" Height="32"
+                                                Foreground="#B71C1C">
+                                            <materialDesign:PackIcon Kind="DeleteOutline" Width="18" Height="18"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -192,7 +253,13 @@
         </TabItem>
 
         <!-- ============ 탭 2: 오늘의 복습 ============ -->
-        <TabItem Header="오늘의 복습">
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ClockCheckOutline" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="오늘의 복습" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -213,7 +280,7 @@
                             <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
                             <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
                             <DataGridTextColumn Header="복습 예정일"
-                                                Binding="{Binding NextReviewDate, StringFormat=yyyy-MM-dd}" Width="110"/>
+                                                Binding="{Binding NextReviewDate, StringFormat=yyyy/MM/dd}" Width="110"/>
                             <DataGridTextColumn Header="반복" Binding="{Binding RepetitionCount}" Width="50"/>
                         </DataGrid.Columns>
                     </DataGrid>
@@ -230,26 +297,32 @@
 
                         <Button Content="5 — 완벽하게 기억남" Tag="5" Click="btnRate_Click"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#2E7D32" BorderBrush="#2E7D32"
                                 Margin="0,0,0,6" Height="36"
                                 HorizontalContentAlignment="Left" Padding="14,0"/>
                         <Button Content="4 — 약간 머뭇거림" Tag="4" Click="btnRate_Click"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#43A047" BorderBrush="#43A047"
                                 Margin="0,0,0,6" Height="36"
                                 HorizontalContentAlignment="Left" Padding="14,0"/>
                         <Button Content="3 — 어렵게 기억함" Tag="3" Click="btnRate_Click"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#EF6C00" BorderBrush="#EF6C00"
                                 Margin="0,0,0,6" Height="36"
                                 HorizontalContentAlignment="Left" Padding="14,0"/>
                         <Button Content="2 — 가물가물 (실패)" Tag="2" Click="btnRate_Click"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#E53935" BorderBrush="#E53935"
                                 Margin="0,0,0,6" Height="36"
                                 HorizontalContentAlignment="Left" Padding="14,0"/>
                         <Button Content="1 — 거의 못함 (실패)" Tag="1" Click="btnRate_Click"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#C62828" BorderBrush="#C62828"
                                 Margin="0,0,0,6" Height="36"
                                 HorizontalContentAlignment="Left" Padding="14,0"/>
                         <Button Content="0 — 전혀 모름 (실패)" Tag="0" Click="btnRate_Click"
                                 Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#B71C1C" BorderBrush="#B71C1C"
                                 Margin="0,0,0,6" Height="36"
                                 HorizontalContentAlignment="Left" Padding="14,0"/>
                     </StackPanel>
@@ -258,7 +331,13 @@
         </TabItem>
 
         <!-- ============ 탭 3: 시험 D-Day ============ -->
-        <TabItem Header="시험 D-Day">
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="CalendarStar" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="시험 D-Day" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
             <Grid Margin="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="340"/>
@@ -311,19 +390,37 @@
 
                 <!-- 오른쪽: 시험 목록 (D-Day) -->
                 <DockPanel Grid.Column="1">
-                    <TextBlock DockPanel.Dock="Top" Text="등록된 시험"
-                               FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <TextBlock Text="등록된 시험" FontSize="18" FontWeight="Bold"/>
+                        <TextBlock Text="행 더블클릭 = 편집  ·  휴지통 = 삭제"
+                                   FontSize="11" Foreground="#888"
+                                   HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
+                    </Grid>
                     <DataGrid x:Name="dgExams"
                               Style="{StaticResource MaterialDesignDataGrid}"
                               AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserAddRows="False" SelectionMode="Single"
-                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="36">
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="40"
+                              MouseDoubleClick="dgExams_MouseDoubleClick">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="D-Day" Binding="{Binding DDayText}" Width="80"/>
                             <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="120"/>
                             <DataGridTextColumn Header="시험명" Binding="{Binding Name}" Width="*"/>
                             <DataGridTextColumn Header="시험일"
-                                                Binding="{Binding ExamDate, StringFormat=yyyy-MM-dd}" Width="110"/>
+                                                Binding="{Binding ExamDate, StringFormat=yyyy/MM/dd}" Width="110"/>
+                            <DataGridTemplateColumn Header="" Width="44">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource MaterialDesignIconButton}"
+                                                Click="btnDeleteExam_Click"
+                                                ToolTip="삭제"
+                                                Padding="2" Width="32" Height="32"
+                                                Foreground="#B71C1C">
+                                            <materialDesign:PackIcon Kind="DeleteOutline" Width="18" Height="18"/>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

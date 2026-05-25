@@ -1,11 +1,13 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using LiveChartsCore;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using StudyPlanner.Data;
+using StudyPlanner.Dialogs;
 using StudyPlanner.Models;
 using StudyPlanner.Services;
 // WinForms 참조로 인한 이름 충돌 방지 (WPF 쪽 명시)
@@ -24,6 +26,12 @@ namespace StudyPlanner
 
         // 트레이 아이콘 & 알림 서비스
         private TrayNotificationService? trayService;
+
+        // 학습 주제 캐시 (DB에서 한 번 읽고 필터링은 메모리 상에서 수행)
+        private List<StudyTopic> allTopics = new();
+
+        // "전체" 옵션 (필터 ComboBox용)
+        private const string FilterAllSubjects = "전체";
 
         public MainWindow()
         {
@@ -90,15 +98,75 @@ namespace StudyPlanner
             ShowTodayReviewNotification();
         }
 
-        // DB에서 전체 학습 주제 목록을 불러와 표시 (학습 주제 탭)
+        // DB에서 전체 학습 주제를 캐시에 적재 → 과목 필터 갱신 → 현재 필터 조건 적용
         private void LoadTopics()
         {
             using (var db = new StudyDbContext())
             {
-                dgTopics.ItemsSource = db.StudyTopics
-                                         .OrderByDescending(t => t.StudyDate)
-                                         .ToList();
+                allTopics = db.StudyTopics
+                              .OrderByDescending(t => t.StudyDate)
+                              .ToList();
             }
+            UpdateSubjectFilterItems();
+            ApplyTopicFilter();
+        }
+
+        // 과목 필터 ComboBox에 "전체" + 현재 등록된 과목들을 채워넣음
+        private void UpdateSubjectFilterItems()
+        {
+            var current = cmbSubjectFilter.SelectedItem as string;
+            var subjects = new List<string> { FilterAllSubjects };
+            subjects.AddRange(allTopics.Select(t => t.Subject).Distinct().OrderBy(s => s));
+            cmbSubjectFilter.ItemsSource = subjects;
+            // 기존 선택 유지 (목록에 없으면 "전체"로)
+            cmbSubjectFilter.SelectedItem = (current != null && subjects.Contains(current))
+                                            ? current
+                                            : FilterAllSubjects;
+        }
+
+        // 현재 검색어 + 과목 선택을 캐시에 적용 → DataGrid에 표시
+        private void ApplyTopicFilter()
+        {
+            // 초기화 중 호출 방지
+            if (allTopics == null) return;
+
+            string keyword = txtSearch?.Text?.Trim() ?? "";
+            string subject = (cmbSubjectFilter?.SelectedItem as string) ?? FilterAllSubjects;
+
+            IEnumerable<StudyTopic> result = allTopics;
+
+            if (subject != FilterAllSubjects && !string.IsNullOrEmpty(subject))
+                result = result.Where(t => t.Subject == subject);
+
+            if (!string.IsNullOrEmpty(keyword))
+                result = result.Where(t =>
+                    (t.Subject?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (t.Unit?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (t.Memo?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false));
+
+            var list = result.ToList();
+            dgTopics.ItemsSource = list;
+
+            // 필터 결과 개수 표시 (필터가 걸려 있을 때만)
+            bool filtered = subject != FilterAllSubjects || !string.IsNullOrEmpty(keyword);
+            txtFilterResultCount.Text = filtered
+                ? $"({list.Count} / {allTopics.Count})"
+                : "";
+        }
+
+        // 검색어 입력 변경
+        private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
+            => ApplyTopicFilter();
+
+        // 과목 필터 선택 변경
+        private void cmbSubjectFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+            => ApplyTopicFilter();
+
+        // 필터 초기화 버튼
+        private void btnClearFilter_Click(object sender, RoutedEventArgs e)
+        {
+            txtSearch.Text = "";
+            cmbSubjectFilter.SelectedItem = FilterAllSubjects;
         }
 
         // 오늘(또는 그 이전)이 복습 예정일인 항목만 불러와 표시 (오늘의 복습 탭)
@@ -433,6 +501,101 @@ namespace StudyPlanner
                         Labeler = v => $"{v:F0}개"   // 'N개' 형태로 표시 (가로로 자연스럽게 읽힘)
                     }
                 };
+            }
+        }
+
+        // ===================== 학습 주제 삭제/편집 =====================
+
+        // 학습 주제 행의 [휴지통] 버튼 클릭 → 확인 후 DB에서 삭제
+        private void btnDeleteTopic_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is StudyTopic topic)
+            {
+                var result = MessageBox.Show(
+                    $"'{topic.Subject} - {topic.Unit}' 주제를 정말 삭제하시겠습니까?",
+                    "삭제 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (result != MessageBoxResult.Yes) return;
+
+                using (var db = new StudyDbContext())
+                {
+                    var tracked = db.StudyTopics.Find(topic.Id);
+                    if (tracked != null)
+                    {
+                        db.StudyTopics.Remove(tracked);
+                        db.SaveChanges();
+                    }
+                }
+
+                LoadTopics();
+                LoadReviewList();
+                LoadDashboard();
+            }
+        }
+
+        // 학습 주제 행 더블클릭 → 편집 다이얼로그 열기
+        private void dgTopics_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            // 헤더나 빈 공간 더블클릭은 무시
+            if (dgTopics.SelectedItem is not StudyTopic selected) return;
+
+            using (var db = new StudyDbContext())
+            {
+                var topic = db.StudyTopics.Find(selected.Id);
+                if (topic == null) return;
+
+                var dlg = new EditTopicDialog(topic) { Owner = this };
+                if (dlg.ShowDialog() == true)
+                {
+                    db.SaveChanges();   // 다이얼로그가 topic 객체를 직접 수정함
+                    LoadTopics();
+                    LoadReviewList();
+                    LoadDashboard();
+                }
+            }
+        }
+
+        // ===================== 시험 삭제/편집 =====================
+
+        private void btnDeleteExam_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.DataContext is Exam exam)
+            {
+                var result = MessageBox.Show(
+                    $"'{exam.Subject} - {exam.Name}' 시험을 정말 삭제하시겠습니까?",
+                    "삭제 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (result != MessageBoxResult.Yes) return;
+
+                using (var db = new StudyDbContext())
+                {
+                    var tracked = db.Exams.Find(exam.Id);
+                    if (tracked != null)
+                    {
+                        db.Exams.Remove(tracked);
+                        db.SaveChanges();
+                    }
+                }
+
+                LoadExams();
+                LoadDashboard();
+            }
+        }
+
+        private void dgExams_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (dgExams.SelectedItem is not Exam selected) return;
+
+            using (var db = new StudyDbContext())
+            {
+                var exam = db.Exams.Find(selected.Id);
+                if (exam == null) return;
+
+                var dlg = new EditExamDialog(exam) { Owner = this };
+                if (dlg.ShowDialog() == true)
+                {
+                    db.SaveChanges();
+                    LoadExams();
+                    LoadDashboard();
+                }
             }
         }
     }
