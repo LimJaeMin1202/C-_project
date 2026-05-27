@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using LiveChartsCore;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
@@ -27,8 +28,12 @@ namespace StudyPlanner
         // 트레이 아이콘 & 알림 서비스
         private TrayNotificationService? trayService;
 
-        // 학습 주제 캐시 (DB에서 한 번 읽고 필터링은 메모리 상에서 수행)
+        // 자동 알림 체크 타이머 (1분마다)
+        private DispatcherTimer? notificationTimer;
+
+        // 학습 주제 / 시험 캐시 (DB에서 한 번 읽고 필터링은 메모리 상에서 수행)
         private List<StudyTopic> allTopics = new();
+        private List<Exam> allExams = new();
 
         // "전체" 옵션 (필터 ComboBox용)
         private const string FilterAllSubjects = "전체";
@@ -71,8 +76,45 @@ namespace StudyPlanner
             // 시작 시 오늘 복습할 항목이 있으면 자동 알림
             ShowTodayReviewNotification();
 
-            // 창 닫힐 때 트레이 아이콘 정리
-            this.Closed += (s, e) => trayService?.Dispose();
+            // 매일 정해진 시간에 자동 알림 보내는 타이머 시작 (1분 간격으로 체크)
+            StartNotificationTimer();
+
+            // 창 닫힐 때 트레이 아이콘 + 타이머 정리
+            this.Closed += (s, e) =>
+            {
+                notificationTimer?.Stop();
+                trayService?.Dispose();
+            };
+        }
+
+        // 매일 정해진 시각에 한 번씩 트레이 알림을 보내는 백그라운드 타이머
+        private void StartNotificationTimer()
+        {
+            notificationTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+            notificationTimer.Tick += CheckScheduledNotification;
+            notificationTimer.Start();
+        }
+
+        // 타이머 콜백 — 설정된 시간을 지났고 오늘 아직 알림 안 보냈으면 발송
+        private void CheckScheduledNotification(object? sender, EventArgs e)
+        {
+            var settings = SettingsService.Load();
+            if (!settings.DailyNotificationEnabled) return;
+
+            // 오늘 이미 발송했으면 패스
+            string todayStr = DateTime.Today.ToString("yyyy-MM-dd");
+            if (settings.LastNotificationDate == todayStr) return;
+
+            // 설정된 시각 파싱
+            if (!TimeSpan.TryParse(settings.DailyNotificationTime, out var targetTime)) return;
+
+            // 현재 시각이 설정 시각을 지났으면 발송
+            if (DateTime.Now.TimeOfDay >= targetTime)
+            {
+                ShowTodayReviewNotification();
+                settings.LastNotificationDate = todayStr;
+                SettingsService.Save();
+            }
         }
 
         // 오늘 복습할 항목 수를 트레이 알림으로 표시
@@ -293,15 +335,66 @@ namespace StudyPlanner
 
         // ===================== 시험 D-Day =====================
 
-        // DB에서 시험 목록을 불러와 표시 (시험일 가까운 순)
+        // DB에서 전체 시험을 캐시에 적재 → 과목 필터 갱신 → 현재 필터 적용
         private void LoadExams()
         {
             using (var db = new StudyDbContext())
             {
-                dgExams.ItemsSource = db.Exams
-                                        .OrderBy(x => x.ExamDate)
-                                        .ToList();
+                allExams = db.Exams.OrderBy(x => x.ExamDate).ToList();
             }
+            UpdateExamSubjectFilterItems();
+            ApplyExamFilter();
+        }
+
+        // 시험 과목 필터 ComboBox 갱신 ("전체" + 등록된 시험 과목들)
+        private void UpdateExamSubjectFilterItems()
+        {
+            var current = cmbExamSubjectFilter.SelectedItem as string;
+            var subjects = new List<string> { FilterAllSubjects };
+            subjects.AddRange(allExams.Select(x => x.Subject).Distinct().OrderBy(s => s));
+            cmbExamSubjectFilter.ItemsSource = subjects;
+            cmbExamSubjectFilter.SelectedItem = (current != null && subjects.Contains(current))
+                                                ? current
+                                                : FilterAllSubjects;
+        }
+
+        // 시험 필터 적용 → DataGrid에 표시
+        private void ApplyExamFilter()
+        {
+            if (allExams == null) return;
+
+            string keyword = txtExamSearch?.Text?.Trim() ?? "";
+            string subject = (cmbExamSubjectFilter?.SelectedItem as string) ?? FilterAllSubjects;
+
+            IEnumerable<Exam> result = allExams;
+
+            if (subject != FilterAllSubjects && !string.IsNullOrEmpty(subject))
+                result = result.Where(x => x.Subject == subject);
+
+            if (!string.IsNullOrEmpty(keyword))
+                result = result.Where(x =>
+                    (x.Subject?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (x.Name?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false));
+
+            var list = result.ToList();
+            dgExams.ItemsSource = list;
+
+            bool filtered = subject != FilterAllSubjects || !string.IsNullOrEmpty(keyword);
+            txtExamFilterResultCount.Text = filtered
+                ? $"({list.Count} / {allExams.Count})"
+                : "";
+        }
+
+        private void txtExamSearch_TextChanged(object sender, TextChangedEventArgs e)
+            => ApplyExamFilter();
+
+        private void cmbExamSubjectFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+            => ApplyExamFilter();
+
+        private void btnClearExamFilter_Click(object sender, RoutedEventArgs e)
+        {
+            txtExamSearch.Text = "";
+            cmbExamSubjectFilter.SelectedItem = FilterAllSubjects;
         }
 
         // [시험 등록] 버튼 클릭
@@ -662,6 +755,14 @@ namespace StudyPlanner
             iconTheme.Kind = isDark
                 ? MaterialDesignThemes.Wpf.PackIconKind.WhiteBalanceSunny
                 : MaterialDesignThemes.Wpf.PackIconKind.WeatherNight;
+        }
+
+        // [⚙️ 설정] 버튼 — 자동 알림 설정 다이얼로그 열기
+        private void btnSettings_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new SettingsDialog { Owner = this };
+            dlg.ShowDialog();
+            // 저장됐든 취소했든 별도 갱신 필요 없음 (타이머가 알아서 새 설정 사용)
         }
 
         // [가져오기] 버튼 — JSON 파일을 DB에 추가 또는 교체

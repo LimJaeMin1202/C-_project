@@ -101,6 +101,11 @@
                             ToolTip="다크모드 / 라이트모드 전환">
                         <materialDesign:PackIcon x:Name="iconTheme" Kind="WeatherNight" Width="20" Height="20"/>
                     </Button>
+                    <Button x:Name="btnSettings" Click="btnSettings_Click"
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="자동 알림 설정">
+                        <materialDesign:PackIcon Kind="CogOutline" Width="20" Height="20"/>
+                    </Button>
                     <Button x:Name="btnNotify" Click="btnNotify_Click"
                             Style="{StaticResource MaterialDesignIconButton}"
                             ToolTip="지금 알림 받기 (시연용)">
@@ -405,12 +410,43 @@
 
                 <!-- 오른쪽: 시험 목록 (D-Day) -->
                 <DockPanel Grid.Column="1">
-                    <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
                         <TextBlock Text="등록된 시험" FontSize="18" FontWeight="Bold"/>
                         <TextBlock Text="행 더블클릭 = 편집  ·  휴지통 = 삭제"
                                    FontSize="11" Foreground="#888"
                                    HorizontalAlignment="Right" VerticalAlignment="Bottom"/>
                     </Grid>
+
+                    <!-- 검색 + 과목 필터 + 초기화 -->
+                    <Grid DockPanel.Dock="Top" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="190"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="txtExamSearch" Grid.Column="0"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="시험명 · 과목 검색"
+                                 materialDesign:TextFieldAssist.HasClearButton="True"
+                                 Margin="0,0,8,0"
+                                 TextChanged="txtExamSearch_TextChanged"/>
+                        <ComboBox x:Name="cmbExamSubjectFilter" Grid.Column="1"
+                                  Style="{StaticResource MaterialDesignFilledComboBox}"
+                                  materialDesign:HintAssist.Hint="과목 필터"
+                                  Margin="0,0,8,0"
+                                  SelectionChanged="cmbExamSubjectFilter_SelectionChanged"/>
+                        <Button Grid.Column="2" Click="btnClearExamFilter_Click"
+                                Style="{StaticResource MaterialDesignIconButton}"
+                                ToolTip="필터 초기화"
+                                VerticalAlignment="Center">
+                            <materialDesign:PackIcon Kind="FilterRemoveOutline" Width="20" Height="20"/>
+                        </Button>
+                        <TextBlock x:Name="txtExamFilterResultCount" Grid.Column="3"
+                                   VerticalAlignment="Center" Margin="6,0,0,0"
+                                   FontSize="12" Foreground="#666"/>
+                    </Grid>
+
                     <DataGrid x:Name="dgExams"
                               Style="{StaticResource MaterialDesignDataGrid}"
                               AutoGenerateColumns="False" IsReadOnly="True"

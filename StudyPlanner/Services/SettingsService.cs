@@ -14,6 +14,11 @@ namespace StudyPlanner.Services
         public class AppSettings
         {
             public bool DarkMode { get; set; } = false;
+
+            // ── 자동 알림 ──
+            public bool DailyNotificationEnabled { get; set; } = false;
+            public string DailyNotificationTime { get; set; } = "09:00";     // "HH:mm" 형식
+            public string LastNotificationDate { get; set; } = "";           // 마지막으로 알림 발송한 날 ("yyyy-MM-dd")
         }
 
         private static AppSettings? cached;
