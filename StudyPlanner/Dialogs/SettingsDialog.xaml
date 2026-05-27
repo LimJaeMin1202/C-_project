@@ -9,7 +9,9 @@
         SizeToContent="Height" Width="440"
         FontFamily="맑은 고딕" FontSize="14"
         Background="{DynamicResource MaterialDesignPaper}"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}">
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown">
     <Grid Margin="24">
         <StackPanel>
             <TextBlock Text="설정" FontSize="18" FontWeight="Bold" Margin="0,0,0,18"/>
@@ -51,9 +53,9 @@
                 <Button Content="취소" Click="btnCancel_Click"
                         Style="{StaticResource MaterialDesignFlatButton}"
                         Margin="0,0,8,0" MinWidth="80"/>
-                <Button Content="저장" Click="btnSave_Click"
+                <Button Content="저장 (Enter)" Click="btnSave_Click" IsDefault="True"
                         Style="{StaticResource MaterialDesignRaisedButton}"
-                        MinWidth="80"/>
+                        MinWidth="100"/>
             </StackPanel>
         </StackPanel>
     </Grid>

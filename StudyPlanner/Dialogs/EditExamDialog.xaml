@@ -9,7 +9,9 @@
         SizeToContent="Height" Width="420"
         FontFamily="맑은 고딕" FontSize="14"
         Background="{DynamicResource MaterialDesignPaper}"
-        TextElement.Foreground="{DynamicResource MaterialDesignBody}">
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Loaded="Window_Loaded"
+        KeyDown="Window_KeyDown">
     <Grid Margin="24">
         <StackPanel>
             <TextBlock Text="시험 편집" FontSize="18" FontWeight="Bold" Margin="0,0,0,18"/>
@@ -29,14 +31,25 @@
                         materialDesign:HintAssist.Hint="시험일"
                         Margin="0,0,0,20"/>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="취소" Click="btnCancel_Click"
+            <DockPanel>
+                <Button DockPanel.Dock="Left" Click="btnDelete_Click"
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        Margin="0,0,8,0" MinWidth="80"/>
-                <Button Content="저장" Click="btnSave_Click"
-                        Style="{StaticResource MaterialDesignRaisedButton}"
-                        MinWidth="80"/>
-            </StackPanel>
+                        Foreground="#B71C1C" MinWidth="80">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="DeleteOutline" Width="18" Height="18"
+                                                 VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBlock Text="삭제"/>
+                    </StackPanel>
+                </Button>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="취소" Click="btnCancel_Click"
+                            Style="{StaticResource MaterialDesignFlatButton}"
+                            Margin="0,0,8,0" MinWidth="80"/>
+                    <Button Content="저장 (Enter)" Click="btnSave_Click" IsDefault="True"
+                            Style="{StaticResource MaterialDesignRaisedButton}"
+                            MinWidth="100"/>
+                </StackPanel>
+            </DockPanel>
         </StackPanel>
     </Grid>
 </Window>

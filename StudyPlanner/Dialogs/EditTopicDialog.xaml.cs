@@ -1,6 +1,8 @@
 using System.Windows;
 using StudyPlanner.Models;
 using MessageBox = System.Windows.MessageBox;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Key = System.Windows.Input.Key;
 
 namespace StudyPlanner.Dialogs
 {
@@ -10,6 +12,9 @@ namespace StudyPlanner.Dialogs
     public partial class EditTopicDialog : Window
     {
         private readonly StudyTopic topic;
+
+        // 사용자가 '삭제'를 눌렀는지 외부에서 알 수 있도록 (호출 측에서 DB 삭제 처리)
+        public bool DeleteRequested { get; private set; } = false;
 
         public EditTopicDialog(StudyTopic topic)
         {
@@ -21,6 +26,35 @@ namespace StudyPlanner.Dialogs
             txtUnit.Text = topic.Unit;
             dpStudyDate.SelectedDate = topic.StudyDate;
             txtMemo.Text = topic.Memo;
+        }
+
+        // 다이얼로그 뜨자마자 과목 필드에 포커스
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            txtSubject.Focus();
+            txtSubject.CaretIndex = txtSubject.Text?.Length ?? 0;
+        }
+
+        // Esc → 취소
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                btnCancel_Click(this, new RoutedEventArgs());
+            }
+        }
+
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            var confirm = MessageBox.Show(
+                $"'{topic.Subject} - {topic.Unit}' 주제를 정말 삭제하시겠습니까?",
+                "삭제 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (confirm != MessageBoxResult.Yes) return;
+
+            DeleteRequested = true;
+            DialogResult = true;   // 호출 측이 DeleteRequested 확인 후 처리
+            Close();
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e)

@@ -14,9 +14,10 @@
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         TextElement.FontWeight="Regular"
         TextOptions.TextFormattingMode="Ideal"
-        TextOptions.TextRenderingMode="Auto">
+        TextOptions.TextRenderingMode="Auto"
+        KeyDown="Window_KeyDown">
 
-    <TabControl Margin="10">
+    <TabControl x:Name="tabMain" Margin="10">
 
         <!-- ============ 탭 0: 대시보드 ============ -->
         <TabItem>
@@ -33,51 +34,75 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- 요약 카드 3개 -->
+                <!-- 요약 카드 4개 (학습 주제 / 오늘 복습 / 다가오는 시험 / 연속 학습) -->
                 <Grid Grid.Row="0" Margin="0,0,0,15">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
                     <materialDesign:Card Grid.Column="0" Background="#3F51B5" UniformCornerRadius="8"
-                                         Padding="20" Margin="0,0,8,0">
+                                         Padding="18" Margin="0,0,6,0"
+                                         Cursor="Hand" ToolTip="등록된 학습 주제 총 개수 (클릭 → 학습 주제 탭)"
+                                         MouseLeftButtonUp="CardLearnTopics_Click">
                         <StackPanel>
-                            <TextBlock Text="학습 주제" Foreground="White" FontSize="14" Opacity="0.85"/>
+                            <TextBlock Text="학습 주제" Foreground="White" FontSize="13" Opacity="0.85"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                 <TextBlock x:Name="txtTotalTopics" Text="0" Foreground="White"
-                                           FontSize="38" FontWeight="Bold"/>
+                                           FontSize="36" FontWeight="Bold"/>
                                 <TextBlock Text="개 등록됨" Foreground="White" FontSize="12" Opacity="0.85"
-                                           VerticalAlignment="Bottom" Margin="6,0,0,9"/>
+                                           VerticalAlignment="Bottom" Margin="6,0,0,8"/>
                             </StackPanel>
                         </StackPanel>
                     </materialDesign:Card>
 
                     <materialDesign:Card Grid.Column="1" Background="#E91E63" UniformCornerRadius="8"
-                                         Padding="20" Margin="4,0,4,0">
+                                         Padding="18" Margin="3,0,3,0"
+                                         Cursor="Hand" ToolTip="오늘 복습할 항목 수 (클릭 → 오늘의 복습 탭)"
+                                         MouseLeftButtonUp="CardTodayReview_Click">
                         <StackPanel>
-                            <TextBlock Text="오늘 복습" Foreground="White" FontSize="14" Opacity="0.85"/>
+                            <TextBlock Text="오늘 복습" Foreground="White" FontSize="13" Opacity="0.85"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                 <TextBlock x:Name="txtTodayReview" Text="0" Foreground="White"
-                                           FontSize="38" FontWeight="Bold"/>
+                                           FontSize="36" FontWeight="Bold"/>
                                 <TextBlock Text="건 예정" Foreground="White" FontSize="12" Opacity="0.85"
-                                           VerticalAlignment="Bottom" Margin="6,0,0,9"/>
+                                           VerticalAlignment="Bottom" Margin="6,0,0,8"/>
                             </StackPanel>
                         </StackPanel>
                     </materialDesign:Card>
 
                     <materialDesign:Card Grid.Column="2" Background="#009688" UniformCornerRadius="8"
-                                         Padding="20" Margin="8,0,0,0">
+                                         Padding="18" Margin="3,0,3,0"
+                                         Cursor="Hand" ToolTip="가장 가까운 시험까지 남은 일수 (클릭 → 시험 D-Day 탭)"
+                                         MouseLeftButtonUp="CardNextExam_Click">
                         <StackPanel>
-                            <TextBlock Text="다가오는 시험" Foreground="White" FontSize="14" Opacity="0.85"/>
+                            <TextBlock Text="다가오는 시험" Foreground="White" FontSize="13" Opacity="0.85"/>
                             <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
                                 <TextBlock x:Name="txtNextExamDay" Text="—" Foreground="White"
-                                           FontSize="38" FontWeight="Bold"/>
+                                           FontSize="36" FontWeight="Bold"/>
                                 <TextBlock x:Name="txtNextExamLabel" Text="등록된 시험 없음"
                                            Foreground="White" FontSize="12" Opacity="0.85"
-                                           VerticalAlignment="Bottom" Margin="6,0,0,9"
+                                           VerticalAlignment="Bottom" Margin="6,0,0,8"
                                            TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="3" Background="#FF6F00" UniformCornerRadius="8"
+                                         Padding="18" Margin="6,0,0,0"
+                                         Cursor="Hand" ToolTip="오늘부터 거꾸로 매일 학습한 일수 (클릭 → 통계 탭)"
+                                         MouseLeftButtonUp="CardStreak_Click">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="🔥 연속 학습" Foreground="White" FontSize="13" Opacity="0.9"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtStreak" Text="0" Foreground="White"
+                                           FontSize="36" FontWeight="Bold"/>
+                                <TextBlock Text="일 연속!" Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="6,0,0,8"/>
                             </StackPanel>
                         </StackPanel>
                     </materialDesign:Card>
@@ -163,7 +188,7 @@
 
                 <!-- 왼쪽: 학습 주제 입력 폼 -->
                 <materialDesign:Card Grid.Column="0" UniformCornerRadius="8" Padding="20" Margin="0,0,10,0">
-                    <StackPanel>
+                    <StackPanel KeyDown="TopicForm_KeyDown">
                         <TextBlock Text="학습 주제 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,18"/>
 
                         <TextBox x:Name="txtSubject"
@@ -238,12 +263,15 @@
                                    FontSize="12" Foreground="#666"/>
                     </Grid>
 
-                    <DataGrid x:Name="dgTopics"
+                    <Grid>
+                        <DataGrid x:Name="dgTopics"
                               Style="{StaticResource MaterialDesignDataGrid}"
                               AutoGenerateColumns="False" IsReadOnly="True"
-                              CanUserAddRows="False" HeadersVisibility="Column"
+                              CanUserAddRows="False" CanUserSortColumns="True"
+                              HeadersVisibility="Column"
                               GridLinesVisibility="Horizontal" RowHeight="40"
-                              MouseDoubleClick="dgTopics_MouseDoubleClick">
+                              MouseDoubleClick="dgTopics_MouseDoubleClick"
+                              PreviewKeyDown="dgTopics_PreviewKeyDown">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
                             <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
@@ -268,6 +296,17 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+                        <!-- 빈 상태 안내 (DataGrid 위에 오버레이) -->
+                        <StackPanel x:Name="emptyTopics" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Visibility="Collapsed" IsHitTestVisible="False">
+                            <materialDesign:PackIcon Kind="BookOpenPageVariantOutline" Width="64" Height="64"
+                                                     Foreground="#BDBDBD" HorizontalAlignment="Center"/>
+                            <TextBlock Text="등록된 학습 주제가 없습니다" Foreground="#888"
+                                       FontSize="15" Margin="0,12,0,4" HorizontalAlignment="Center"/>
+                            <TextBlock Text="좌측 폼에서 첫 주제를 추가해보세요  (Ctrl+N)"
+                                       Foreground="#AAA" FontSize="12" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </DockPanel>
             </Grid>
         </TabItem>
@@ -290,10 +329,12 @@
                 <DockPanel Grid.Column="0" Margin="0,0,10,0">
                     <TextBlock DockPanel.Dock="Top" x:Name="txtReviewCount"
                                Text="오늘 복습할 항목" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <Grid>
                     <DataGrid x:Name="dgReview"
                               Style="{StaticResource MaterialDesignDataGrid}"
                               AutoGenerateColumns="False" IsReadOnly="True"
                               CanUserAddRows="False" SelectionMode="Single"
+                              CanUserSortColumns="True"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="36"
                               SelectionChanged="dgReview_SelectionChanged">
                         <DataGrid.Columns>
@@ -304,6 +345,16 @@
                             <DataGridTextColumn Header="반복" Binding="{Binding RepetitionCount}" Width="50"/>
                         </DataGrid.Columns>
                     </DataGrid>
+                        <StackPanel x:Name="emptyReview" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Visibility="Collapsed" IsHitTestVisible="False">
+                            <materialDesign:PackIcon Kind="CheckCircleOutline" Width="64" Height="64"
+                                                     Foreground="#A5D6A7" HorizontalAlignment="Center"/>
+                            <TextBlock Text="오늘 복습할 항목이 없습니다 ✨" Foreground="#888"
+                                       FontSize="15" Margin="0,12,0,4" HorizontalAlignment="Center"/>
+                            <TextBlock Text="새 학습 주제를 등록하거나 잠시 쉬어가세요"
+                                       Foreground="#AAA" FontSize="12" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </DockPanel>
 
                 <!-- 오른쪽: 자가 평가 패널 -->
@@ -366,7 +417,7 @@
 
                 <!-- 왼쪽: 시험 등록 + 일정 생성 -->
                 <materialDesign:Card Grid.Column="0" UniformCornerRadius="8" Padding="20" Margin="0,0,10,0">
-                    <StackPanel>
+                    <StackPanel KeyDown="ExamForm_KeyDown">
                         <TextBlock Text="시험 등록" FontSize="18" FontWeight="Bold" Margin="0,0,0,18"/>
 
                         <TextBox x:Name="txtExamSubject"
@@ -447,12 +498,15 @@
                                    FontSize="12" Foreground="#666"/>
                     </Grid>
 
+                    <Grid>
                     <DataGrid x:Name="dgExams"
                               Style="{StaticResource MaterialDesignDataGrid}"
                               AutoGenerateColumns="False" IsReadOnly="True"
-                              CanUserAddRows="False" SelectionMode="Single"
+                              CanUserAddRows="False" CanUserSortColumns="True"
+                              SelectionMode="Single"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal" RowHeight="40"
-                              MouseDoubleClick="dgExams_MouseDoubleClick">
+                              MouseDoubleClick="dgExams_MouseDoubleClick"
+                              PreviewKeyDown="dgExams_PreviewKeyDown">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="D-Day" Binding="{Binding DDayText}" Width="80"/>
                             <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="120"/>
@@ -474,6 +528,16 @@
                             </DataGridTemplateColumn>
                         </DataGrid.Columns>
                     </DataGrid>
+                        <StackPanel x:Name="emptyExams" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Visibility="Collapsed" IsHitTestVisible="False">
+                            <materialDesign:PackIcon Kind="CalendarBlankOutline" Width="64" Height="64"
+                                                     Foreground="#BDBDBD" HorizontalAlignment="Center"/>
+                            <TextBlock Text="등록된 시험이 없습니다" Foreground="#888"
+                                       FontSize="15" Margin="0,12,0,4" HorizontalAlignment="Center"/>
+                            <TextBlock Text="좌측 폼에서 시험 일정을 추가해보세요  (Ctrl+E)"
+                                       Foreground="#AAA" FontSize="12" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Grid>
                 </DockPanel>
             </Grid>
         </TabItem>

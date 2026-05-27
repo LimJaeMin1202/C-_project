@@ -1,5 +1,7 @@
 using System.Windows;
 using StudyPlanner.Services;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Key = System.Windows.Input.Key;
 
 namespace StudyPlanner.Dialogs
 {
@@ -50,6 +52,20 @@ namespace StudyPlanner.Dialogs
         {
             DialogResult = false;
             Close();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            chkNotifyEnabled.Focus();
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                btnCancel_Click(this, new RoutedEventArgs());
+            }
         }
     }
 }

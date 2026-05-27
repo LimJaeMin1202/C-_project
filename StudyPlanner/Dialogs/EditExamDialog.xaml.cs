@@ -1,6 +1,8 @@
 using System.Windows;
 using StudyPlanner.Models;
 using MessageBox = System.Windows.MessageBox;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Key = System.Windows.Input.Key;
 
 namespace StudyPlanner.Dialogs
 {
@@ -8,6 +10,7 @@ namespace StudyPlanner.Dialogs
     public partial class EditExamDialog : Window
     {
         private readonly Exam exam;
+        public bool DeleteRequested { get; private set; } = false;
 
         public EditExamDialog(Exam exam)
         {
@@ -17,6 +20,33 @@ namespace StudyPlanner.Dialogs
             txtSubject.Text = exam.Subject;
             txtName.Text = exam.Name;
             dpExamDate.SelectedDate = exam.ExamDate;
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            txtSubject.Focus();
+            txtSubject.CaretIndex = txtSubject.Text?.Length ?? 0;
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                btnCancel_Click(this, new RoutedEventArgs());
+            }
+        }
+
+        private void btnDelete_Click(object sender, RoutedEventArgs e)
+        {
+            var confirm = MessageBox.Show(
+                $"'{exam.Subject} - {exam.Name}' 시험을 정말 삭제하시겠습니까?",
+                "삭제 확인", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (confirm != MessageBoxResult.Yes) return;
+
+            DeleteRequested = true;
+            DialogResult = true;
+            Close();
         }
 
         private void btnSave_Click(object sender, RoutedEventArgs e)

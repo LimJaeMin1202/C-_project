@@ -14,6 +14,12 @@ using StudyPlanner.Services;
 // WinForms 참조로 인한 이름 충돌 방지 (WPF 쪽 명시)
 using MessageBox = System.Windows.MessageBox;
 using Button = System.Windows.Controls.Button;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Key = System.Windows.Input.Key;
+using ModifierKeys = System.Windows.Input.ModifierKeys;
+using Keyboard = System.Windows.Input.Keyboard;
+using TextBox = System.Windows.Controls.TextBox;
+using MouseButtonEventArgs = System.Windows.Input.MouseButtonEventArgs;
 
 namespace StudyPlanner
 {
@@ -30,6 +36,10 @@ namespace StudyPlanner
 
         // 자동 알림 체크 타이머 (1분마다)
         private DispatcherTimer? notificationTimer;
+
+        // 검색 입력 debounce 타이머 (타이핑 멈춘 후 250ms 뒤 필터 적용)
+        private DispatcherTimer? topicSearchDebounce;
+        private DispatcherTimer? examSearchDebounce;
 
         // 학습 주제 / 시험 캐시 (DB에서 한 번 읽고 필터링은 메모리 상에서 수행)
         private List<StudyTopic> allTopics = new();
@@ -200,11 +210,27 @@ namespace StudyPlanner
             txtFilterResultCount.Text = filtered
                 ? $"({list.Count} / {allTopics.Count})"
                 : "";
+
+            // 빈 상태 안내 (필터 후 결과 0이면 표시)
+            emptyTopics.Visibility = list.Count == 0
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        // 검색어 입력 변경
+        // 검색어 입력 변경 (debounce: 마지막 타이핑 후 250ms 뒤 필터 적용)
         private void txtSearch_TextChanged(object sender, TextChangedEventArgs e)
-            => ApplyTopicFilter();
+        {
+            if (topicSearchDebounce == null)
+            {
+                topicSearchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+                topicSearchDebounce.Tick += (s, ev) =>
+                {
+                    topicSearchDebounce!.Stop();
+                    ApplyTopicFilter();
+                };
+            }
+            topicSearchDebounce.Stop();
+            topicSearchDebounce.Start();
+        }
 
         // 과목 필터 선택 변경
         private void cmbSubjectFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -230,6 +256,9 @@ namespace StudyPlanner
 
                 dgReview.ItemsSource = dueList;
                 txtReviewCount.Text = $"오늘 복습할 항목 ({dueList.Count}개)";
+
+                emptyReview.Visibility = dueList.Count == 0
+                    ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
@@ -383,10 +412,26 @@ namespace StudyPlanner
             txtExamFilterResultCount.Text = filtered
                 ? $"({list.Count} / {allExams.Count})"
                 : "";
+
+            emptyExams.Visibility = list.Count == 0
+                ? Visibility.Visible : Visibility.Collapsed;
         }
 
+        // 시험 검색 (debounce)
         private void txtExamSearch_TextChanged(object sender, TextChangedEventArgs e)
-            => ApplyExamFilter();
+        {
+            if (examSearchDebounce == null)
+            {
+                examSearchDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
+                examSearchDebounce.Tick += (s, ev) =>
+                {
+                    examSearchDebounce!.Stop();
+                    ApplyExamFilter();
+                };
+            }
+            examSearchDebounce.Stop();
+            examSearchDebounce.Start();
+        }
 
         private void cmbExamSubjectFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
             => ApplyExamFilter();
@@ -522,6 +567,9 @@ namespace StudyPlanner
                     txtNextExamLabel.Text = nextExam.Subject;
                 }
 
+                // 연속 학습 일수 — 오늘부터 거꾸로 매일 학습 주제가 등록된 일수
+                txtStreak.Text = CalculateStreak(topics).ToString();
+
                 // ── 차트 1: 과목별 학습 주제 수 (막대) ──
                 var bySubject = topics.GroupBy(t => t.Subject)
                                       .Select(g => new { Subject = g.Key, Count = g.Count() })
@@ -652,7 +700,11 @@ namespace StudyPlanner
                 var dlg = new EditTopicDialog(topic) { Owner = this };
                 if (dlg.ShowDialog() == true)
                 {
-                    db.SaveChanges();   // 다이얼로그가 topic 객체를 직접 수정함
+                    if (dlg.DeleteRequested)
+                    {
+                        db.StudyTopics.Remove(topic);
+                    }
+                    db.SaveChanges();   // 다이얼로그가 topic 객체를 직접 수정함 (또는 삭제)
                     LoadTopics();
                     LoadReviewList();
                     LoadDashboard();
@@ -700,6 +752,10 @@ namespace StudyPlanner
                 var dlg = new EditExamDialog(exam) { Owner = this };
                 if (dlg.ShowDialog() == true)
                 {
+                    if (dlg.DeleteRequested)
+                    {
+                        db.Exams.Remove(exam);
+                    }
                     db.SaveChanges();
                     LoadExams();
                     LoadDashboard();
@@ -926,5 +982,135 @@ namespace StudyPlanner
                 dgWeakTopics.ItemsSource = weakTop5;
             }
         }
+
+        // ===================== 키보드 단축키 (앱 수준) =====================
+
+        // 전역 단축키 핸들러
+        // Ctrl+1~5: 탭 전환  /  Ctrl+N: 학습주제 추가 포커스  /  Ctrl+E: 시험 추가 포커스
+        // Ctrl+F: 학습주제 검색 포커스  /  Ctrl+D: 다크모드 토글
+        // Ctrl+B: 백업 내보내기  /  Ctrl+I: 가져오기  /  Ctrl+,: 설정
+        // F5: 새로고침
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            bool ctrl = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+
+            if (ctrl)
+            {
+                switch (e.Key)
+                {
+                    case Key.D1: tabMain.SelectedIndex = 0; e.Handled = true; return;
+                    case Key.D2: tabMain.SelectedIndex = 1; e.Handled = true; return;
+                    case Key.D3: tabMain.SelectedIndex = 2; e.Handled = true; return;
+                    case Key.D4: tabMain.SelectedIndex = 3; e.Handled = true; return;
+                    case Key.D5: tabMain.SelectedIndex = 4; e.Handled = true; return;
+                    case Key.N:
+                        tabMain.SelectedIndex = 1;
+                        Dispatcher.BeginInvoke(new Action(() => txtSubject.Focus()));
+                        e.Handled = true; return;
+                    case Key.E:
+                        tabMain.SelectedIndex = 3;
+                        Dispatcher.BeginInvoke(new Action(() => txtExamSubject.Focus()));
+                        e.Handled = true; return;
+                    case Key.F:
+                        tabMain.SelectedIndex = 1;
+                        Dispatcher.BeginInvoke(new Action(() => txtSearch.Focus()));
+                        e.Handled = true; return;
+                    case Key.D: btnTheme_Click(this, new RoutedEventArgs()); e.Handled = true; return;
+                    case Key.B: btnExport_Click(this, new RoutedEventArgs()); e.Handled = true; return;
+                    case Key.I: btnImport_Click(this, new RoutedEventArgs()); e.Handled = true; return;
+                    case Key.OemComma: btnSettings_Click(this, new RoutedEventArgs()); e.Handled = true; return;
+                }
+            }
+
+            if (e.Key == Key.F5)
+            {
+                LoadTopics();
+                LoadReviewList();
+                LoadExams();
+                LoadDashboard();
+                LoadStatistics();
+                e.Handled = true;
+            }
+        }
+
+        // DataGrid 행에 포커스 두고 Delete 키 → 삭제 (학습 주제)
+        private void dgTopics_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Delete && dgTopics.SelectedItem is StudyTopic topic)
+            {
+                e.Handled = true;
+                // 기존 삭제 핸들러 재사용 (Button.DataContext 패턴이라 가짜 버튼 생성)
+                var fakeBtn = new Button { DataContext = topic };
+                btnDeleteTopic_Click(fakeBtn, new RoutedEventArgs());
+            }
+            else if (e.Key == Key.F2 && dgTopics.SelectedItem is StudyTopic)
+            {
+                e.Handled = true;
+                dgTopics_MouseDoubleClick(sender, null!);
+            }
+        }
+
+        // DataGrid 행 + Delete/F2 (시험)
+        private void dgExams_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Delete && dgExams.SelectedItem is Exam exam)
+            {
+                e.Handled = true;
+                var fakeBtn = new Button { DataContext = exam };
+                btnDeleteExam_Click(fakeBtn, new RoutedEventArgs());
+            }
+            else if (e.Key == Key.F2 && dgExams.SelectedItem is Exam)
+            {
+                e.Handled = true;
+                dgExams_MouseDoubleClick(sender, null!);
+            }
+        }
+
+        // ===================== 폼 Enter 키로 제출 =====================
+
+        // 학습 주제 입력 폼 — 어떤 필드에서든 Enter → 등록
+        private void TopicForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && !(sender is TextBox tb && tb.AcceptsReturn))
+            {
+                e.Handled = true;
+                btnAdd_Click(this, new RoutedEventArgs());
+            }
+        }
+
+        // 시험 입력 폼 — Enter → 시험 등록
+        private void ExamForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                e.Handled = true;
+                btnAddExam_Click(this, new RoutedEventArgs());
+            }
+        }
+
+        // ===================== 연속 학습 일수 =====================
+
+        // 오늘부터 거꾸로 매일 학습 주제가 등록되어 있는지 확인하여 연속 일수 반환
+        // - 오늘 등록 X여도 어제까지 연속이면 streak는 어제까지의 일수
+        private int CalculateStreak(List<StudyTopic> topics)
+        {
+            var dates = topics.Select(t => t.StudyDate.Date).ToHashSet();
+            int streak = 0;
+            var d = DateTime.Today;
+            // 오늘이 비어있으면 어제부터 카운트 시작
+            if (!dates.Contains(d)) d = d.AddDays(-1);
+            while (dates.Contains(d))
+            {
+                streak++;
+                d = d.AddDays(-1);
+            }
+            return streak;
+        }
+
+        // ===================== 대시보드 카드 클릭 → 탭 이동 =====================
+        private void CardLearnTopics_Click(object sender, MouseButtonEventArgs e)  => tabMain.SelectedIndex = 1;
+        private void CardTodayReview_Click(object sender, MouseButtonEventArgs e)  => tabMain.SelectedIndex = 2;
+        private void CardNextExam_Click(object sender, MouseButtonEventArgs e)     => tabMain.SelectedIndex = 3;
+        private void CardStreak_Click(object sender, MouseButtonEventArgs e)       => tabMain.SelectedIndex = 4;
     }
 }
