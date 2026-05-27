@@ -58,6 +58,7 @@ namespace StudyPlanner
             LoadReviewList();    // 오늘 복습할 항목 불러오기
             LoadExams();         // 시험 목록 불러오기
             LoadDashboard();     // 대시보드 통계/차트 갱신
+            LoadStatistics();    // 상세 통계 탭 갱신
 
             // 트레이 아이콘 등록 (앱 실행 중 작업표시줄 트레이에 표시됨)
             trayService = new TrayNotificationService(onOpenRequested: () =>
@@ -233,6 +234,7 @@ namespace StudyPlanner
             LoadTopics();
             LoadReviewList();
             LoadDashboard();
+            LoadStatistics();
         }
 
         // 오늘의 복습 목록에서 항목을 선택했을 때
@@ -286,6 +288,7 @@ namespace StudyPlanner
             LoadTopics();
             LoadReviewList();
             LoadDashboard();
+            LoadStatistics();
         }
 
         // ===================== 시험 D-Day =====================
@@ -335,6 +338,7 @@ namespace StudyPlanner
             dpExamDate.SelectedDate = DateTime.Today.AddDays(14);
             LoadExams();
             LoadDashboard();
+            LoadStatistics();
         }
 
         // [시험 대비 복습 일정 생성] 버튼 클릭 — D-Day 역산
@@ -388,6 +392,7 @@ namespace StudyPlanner
             LoadTopics();
             LoadReviewList();
             LoadDashboard();
+            LoadStatistics();
             MessageBox.Show(
                 $"'{exam.Subject}' 시험({exam.DDayText}) 대비 복습 일정을 생성했습니다.\n" +
                 $"학습 주제 탭에서 다음 복습일이 시험일 기준으로 재배치된 것을 확인하세요.",
@@ -536,6 +541,7 @@ namespace StudyPlanner
                 LoadTopics();
                 LoadReviewList();
                 LoadDashboard();
+                LoadStatistics();
             }
         }
 
@@ -557,6 +563,7 @@ namespace StudyPlanner
                     LoadTopics();
                     LoadReviewList();
                     LoadDashboard();
+                    LoadStatistics();
                 }
             }
         }
@@ -584,6 +591,7 @@ namespace StudyPlanner
 
                 LoadExams();
                 LoadDashboard();
+                LoadStatistics();
             }
         }
 
@@ -602,6 +610,7 @@ namespace StudyPlanner
                     db.SaveChanges();
                     LoadExams();
                     LoadDashboard();
+                    LoadStatistics();
                 }
             }
         }
@@ -684,6 +693,7 @@ namespace StudyPlanner
                 LoadReviewList();
                 LoadExams();
                 LoadDashboard();
+                LoadStatistics();
 
                 string mode = replaceExisting ? "교체" : "추가";
                 MessageBox.Show(
@@ -694,6 +704,125 @@ namespace StudyPlanner
             {
                 MessageBox.Show($"가져오기 실패\n\n{ex.Message}", "오류",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // ===================== 상세 통계 탭 =====================
+
+        // 학습 주제 데이터를 분석해 통계 탭의 카드/차트/약점 Top 5를 갱신
+        private void LoadStatistics()
+        {
+            using (var db = new StudyDbContext())
+            {
+                var topics = db.StudyTopics.ToList();
+                var today = DateTime.Today;
+
+                // ─── 요약 카드 4개 ───
+                txtStatTotal.Text = topics.Count.ToString();
+                txtStatReviewCount.Text = topics.Sum(t => t.RepetitionCount).ToString();
+                txtStatUpcoming30.Text = topics.Count(t => t.NextReviewDate <= today.AddDays(30)).ToString();
+                // 약점: 한 번 이상 복습한 주제 중 EF가 2.0 미만 (EF 기본값 2.5는 제외)
+                txtStatWeak.Text = topics.Count(t => t.RepetitionCount > 0 && t.EaseFactor < 2.0).ToString();
+
+                // ─── 차트 1: 월별 학습 추이 (최근 6개월) ───
+                var months = Enumerable.Range(0, 6)
+                    .Select(i => new DateTime(today.AddMonths(-5 + i).Year, today.AddMonths(-5 + i).Month, 1))
+                    .ToArray();
+                int[] monthCounts = months.Select(m =>
+                    topics.Count(t => t.StudyDate.Year == m.Year && t.StudyDate.Month == m.Month)
+                ).ToArray();
+                string[] monthLabels = months.Select(m => $"{m.Month}월").ToArray();
+
+                chartMonthly.LegendPosition = LegendPosition.Hidden;
+                chartMonthly.TooltipPosition = TooltipPosition.Top;
+                chartMonthly.Series = new ISeries[]
+                {
+                    new LineSeries<int>
+                    {
+                        Values = monthCounts,
+                        Fill = null,
+                        GeometrySize = 8,
+                        LineSmoothness = 0.4,
+                        Stroke = new SolidColorPaint(new SKColor(63, 81, 181)) { StrokeThickness = 3 },
+                        GeometryStroke = new SolidColorPaint(new SKColor(63, 81, 181)) { StrokeThickness = 2 },
+                        GeometryFill = new SolidColorPaint(SKColors.White)
+                    }
+                };
+                chartMonthly.XAxes = new[]
+                {
+                    new Axis { Labels = monthLabels, LabelsRotation = 0 }
+                };
+                chartMonthly.YAxes = new[]
+                {
+                    new Axis { MinLimit = 0, MinStep = 1, Labeler = v => $"{v:F0}개" }
+                };
+
+                // ─── 차트 2: 요일별 학습 분포 ───
+                // .NET DayOfWeek: 일=0, 월=1, ..., 토=6 → 월=0 시작으로 변환: (dow+6)%7
+                string[] dayLabels = { "월", "화", "수", "목", "금", "토", "일" };
+                int[] dayCounts = new int[7];
+                foreach (var t in topics)
+                {
+                    int idx = ((int)t.StudyDate.DayOfWeek + 6) % 7;
+                    dayCounts[idx]++;
+                }
+
+                chartDayOfWeek.LegendPosition = LegendPosition.Hidden;
+                chartDayOfWeek.TooltipPosition = TooltipPosition.Top;
+                chartDayOfWeek.Series = new ISeries[]
+                {
+                    new ColumnSeries<int>
+                    {
+                        Values = dayCounts,
+                        Fill = new SolidColorPaint(new SKColor(38, 166, 154))  // teal
+                    }
+                };
+                chartDayOfWeek.XAxes = new[]
+                {
+                    new Axis { Labels = dayLabels, LabelsRotation = 0 }
+                };
+                chartDayOfWeek.YAxes = new[]
+                {
+                    new Axis { MinLimit = 0, MinStep = 1, Labeler = v => $"{v:F0}개" }
+                };
+
+                // ─── 차트 3: 복습 진행도 분포 (0회, 1회, 2회, 3회, 4회+) ───
+                string[] progressLabels = { "0회", "1회", "2회", "3회", "4회+" };
+                int[] progressCounts = new[]
+                {
+                    topics.Count(t => t.RepetitionCount == 0),
+                    topics.Count(t => t.RepetitionCount == 1),
+                    topics.Count(t => t.RepetitionCount == 2),
+                    topics.Count(t => t.RepetitionCount == 3),
+                    topics.Count(t => t.RepetitionCount >= 4)
+                };
+
+                chartProgress.LegendPosition = LegendPosition.Hidden;
+                chartProgress.TooltipPosition = TooltipPosition.Top;
+                chartProgress.Series = new ISeries[]
+                {
+                    new ColumnSeries<int>
+                    {
+                        Values = progressCounts,
+                        Fill = new SolidColorPaint(new SKColor(255, 167, 38))  // amber
+                    }
+                };
+                chartProgress.XAxes = new[]
+                {
+                    new Axis { Labels = progressLabels, LabelsRotation = 0 }
+                };
+                chartProgress.YAxes = new[]
+                {
+                    new Axis { MinLimit = 0, MinStep = 1, Labeler = v => $"{v:F0}개" }
+                };
+
+                // ─── 약점 단원 Top 5 (한 번 이상 복습한 것 중 EF 낮은 순) ───
+                var weakTop5 = topics
+                    .Where(t => t.RepetitionCount > 0)
+                    .OrderBy(t => t.EaseFactor)
+                    .Take(5)
+                    .ToList();
+                dgWeakTopics.ItemsSource = weakTop5;
             }
         }
     }

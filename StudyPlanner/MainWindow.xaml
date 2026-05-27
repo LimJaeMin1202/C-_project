@@ -442,5 +442,159 @@
             </Grid>
         </TabItem>
 
+        <!-- ============ 탭 4: 상세 통계 ============ -->
+        <TabItem>
+            <TabItem.Header>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="ChartBoxOutline" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="통계" VerticalAlignment="Center"/>
+                </StackPanel>
+            </TabItem.Header>
+            <Grid Margin="15">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- 요약 카드 4개 -->
+                <Grid Grid.Row="0" Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:Card Grid.Column="0" Background="#5C6BC0" UniformCornerRadius="8"
+                                         Padding="18" Margin="0,0,6,0">
+                        <StackPanel>
+                            <TextBlock Text="누적 학습 주제" Foreground="White" FontSize="13" Opacity="0.85"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtStatTotal" Text="0" Foreground="White"
+                                           FontSize="34" FontWeight="Bold"/>
+                                <TextBlock Text="개" Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="4,0,0,7"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="1" Background="#26A69A" UniformCornerRadius="8"
+                                         Padding="18" Margin="3,0,3,0">
+                        <StackPanel>
+                            <TextBlock Text="누적 복습 횟수" Foreground="White" FontSize="13" Opacity="0.85"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtStatReviewCount" Text="0" Foreground="White"
+                                           FontSize="34" FontWeight="Bold"/>
+                                <TextBlock Text="회" Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="4,0,0,7"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="2" Background="#FFA726" UniformCornerRadius="8"
+                                         Padding="18" Margin="3,0,3,0">
+                        <StackPanel>
+                            <TextBlock Text="30일 내 복습 예정" Foreground="White" FontSize="13" Opacity="0.85"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtStatUpcoming30" Text="0" Foreground="White"
+                                           FontSize="34" FontWeight="Bold"/>
+                                <TextBlock Text="건" Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="4,0,0,7"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="3" Background="#EF5350" UniformCornerRadius="8"
+                                         Padding="18" Margin="6,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="약점 주제 (EF&lt;2.0)" Foreground="White" FontSize="13" Opacity="0.85"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                <TextBlock x:Name="txtStatWeak" Text="0" Foreground="White"
+                                           FontSize="34" FontWeight="Bold"/>
+                                <TextBlock Text="개" Foreground="White" FontSize="12" Opacity="0.85"
+                                           VerticalAlignment="Bottom" Margin="4,0,0,7"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </Grid>
+
+                <!-- 차트 2개 (월별 / 요일별) -->
+                <Grid Grid.Row="1" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:Card Grid.Column="0" UniformCornerRadius="8" Padding="14" Margin="0,0,6,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="월별 학습 추이 (최근 6개월)"
+                                       FontSize="14" FontWeight="Bold" Margin="0,0,0,2"/>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="달마다 새로 등록한 학습 주제 수입니다."
+                                       FontSize="11" Foreground="#888" Margin="0,0,0,8"/>
+                            <lvc:CartesianChart x:Name="chartMonthly"/>
+                        </DockPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="1" UniformCornerRadius="8" Padding="14" Margin="6,0,0,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="요일별 학습 분포"
+                                       FontSize="14" FontWeight="Bold" Margin="0,0,0,2"/>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="어느 요일에 가장 많이 공부했는지 보여줍니다."
+                                       FontSize="11" Foreground="#888" Margin="0,0,0,8"/>
+                            <lvc:CartesianChart x:Name="chartDayOfWeek"/>
+                        </DockPanel>
+                    </materialDesign:Card>
+                </Grid>
+
+                <!-- 복습 진행도 + 약점 단원 Top 5 -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <materialDesign:Card Grid.Column="0" UniformCornerRadius="8" Padding="14" Margin="0,0,6,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="복습 진행도 분포"
+                                       FontSize="14" FontWeight="Bold" Margin="0,0,0,2"/>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="SM-2 알고리즘으로 각 주제를 몇 번 복습했는지 분포입니다."
+                                       FontSize="11" Foreground="#888" Margin="0,0,0,8"
+                                       TextWrapping="Wrap"/>
+                            <lvc:CartesianChart x:Name="chartProgress"/>
+                        </DockPanel>
+                    </materialDesign:Card>
+
+                    <materialDesign:Card Grid.Column="1" UniformCornerRadius="8" Padding="14" Margin="6,0,0,0">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Top" Text="약점 단원 Top 5"
+                                       FontSize="14" FontWeight="Bold" Margin="0,0,0,2"/>
+                            <TextBlock DockPanel.Dock="Top"
+                                       Text="난이도 계수(EF)가 가장 낮은 단원들입니다. 우선적으로 복습하세요."
+                                       FontSize="11" Foreground="#888" Margin="0,0,0,8"
+                                       TextWrapping="Wrap"/>
+                            <DataGrid x:Name="dgWeakTopics"
+                                      Style="{StaticResource MaterialDesignDataGrid}"
+                                      AutoGenerateColumns="False" IsReadOnly="True"
+                                      CanUserAddRows="False" HeadersVisibility="Column"
+                                      GridLinesVisibility="Horizontal" RowHeight="34">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="과목" Binding="{Binding Subject}" Width="100"/>
+                                    <DataGridTextColumn Header="단원/주제" Binding="{Binding Unit}" Width="*"/>
+                                    <DataGridTextColumn Header="EF"
+                                                        Binding="{Binding EaseFactor, StringFormat=F2}" Width="60"/>
+                                    <DataGridTextColumn Header="복습"
+                                                        Binding="{Binding RepetitionCount}" Width="50"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </materialDesign:Card>
+                </Grid>
+            </Grid>
+        </TabItem>
+
     </TabControl>
 </Window>
