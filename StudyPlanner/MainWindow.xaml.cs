@@ -37,6 +37,11 @@ namespace StudyPlanner
         {
             InitializeComponent();
 
+            // 저장된 설정 불러와서 테마 즉시 적용 (앱 껐다 켜도 모드 기억)
+            var settings = SettingsService.Load();
+            ThemeService.ApplyTheme(settings.DarkMode);
+            UpdateThemeIcon(settings.DarkMode);
+
             // LiveCharts2 차트 텍스트 한글 깨짐 방지: 맑은 고딕을 전역 폰트로 지정
             LiveCharts.Configure(config =>
                 config.HasGlobalSKTypeface(SKTypeface.FromFamilyName("Malgun Gothic")));
@@ -626,6 +631,28 @@ namespace StudyPlanner
                 MessageBox.Show($"내보내기 실패\n\n{ex.Message}", "오류",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        // ===================== 다크모드 토글 =====================
+
+        // [테마 전환] 버튼 클릭 → 라이트↔다크 토글 + 저장
+        private void btnTheme_Click(object sender, RoutedEventArgs e)
+        {
+            var settings = SettingsService.Load();
+            settings.DarkMode = !settings.DarkMode;
+            ThemeService.ApplyTheme(settings.DarkMode);
+            SettingsService.Save();
+            UpdateThemeIcon(settings.DarkMode);
+        }
+
+        // 현재 테마에 맞춰 토글 아이콘 변경
+        // - 라이트모드일 때 → 달 모양 (클릭하면 다크로 전환)
+        // - 다크모드일 때 → 해 모양 (클릭하면 라이트로 전환)
+        private void UpdateThemeIcon(bool isDark)
+        {
+            iconTheme.Kind = isDark
+                ? MaterialDesignThemes.Wpf.PackIconKind.WhiteBalanceSunny
+                : MaterialDesignThemes.Wpf.PackIconKind.WeatherNight;
         }
 
         // [가져오기] 버튼 — JSON 파일을 DB에 추가 또는 교체
