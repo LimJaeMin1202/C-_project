@@ -83,15 +83,28 @@
                     </materialDesign:Card>
                 </Grid>
 
-                <!-- 우하단 구석: 시연용 알림 트리거 (작은 종 아이콘 버튼) -->
-                <Button Grid.Row="2" x:Name="btnNotify"
-                        Click="btnNotify_Click"
-                        Style="{StaticResource MaterialDesignIconButton}"
-                        ToolTip="지금 알림 받기 (시연용)"
-                        HorizontalAlignment="Right" Margin="0,8,0,0"
-                        Foreground="#999">
-                    <materialDesign:PackIcon Kind="BellOutline" Width="20" Height="20"/>
-                </Button>
+                <!-- 우하단 구석: 유틸리티 아이콘 버튼들 (가져오기/내보내기/알림) -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal"
+                            HorizontalAlignment="Right" Margin="0,8,0,0">
+                    <Button x:Name="btnImport" Click="btnImport_Click"
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="JSON 파일에서 데이터 가져오기 (복원)"
+                            Foreground="#999">
+                        <materialDesign:PackIcon Kind="Import" Width="20" Height="20"/>
+                    </Button>
+                    <Button x:Name="btnExport" Click="btnExport_Click"
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="JSON 파일로 데이터 내보내기 (백업)"
+                            Foreground="#999">
+                        <materialDesign:PackIcon Kind="Export" Width="20" Height="20"/>
+                    </Button>
+                    <Button x:Name="btnNotify" Click="btnNotify_Click"
+                            Style="{StaticResource MaterialDesignIconButton}"
+                            ToolTip="지금 알림 받기 (시연용)"
+                            Foreground="#999">
+                        <materialDesign:PackIcon Kind="BellOutline" Width="20" Height="20"/>
+                    </Button>
+                </StackPanel>
 
                 <!-- 차트 2개 -->
                 <Grid Grid.Row="1">

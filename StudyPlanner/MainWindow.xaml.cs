@@ -469,7 +469,9 @@ namespace StudyPlanner
                     {
                         if (i == 0) return "오늘";
                         if (i == 1) return "내일";
-                        return today.AddDays(i).ToString("M/d");
+                        // ※ "M/d"의 '/'는 .NET에서 문화권별 날짜 구분자(한국=- 등)로 해석됨
+                        //    리터럴 슬래시를 원하면 '/' 처럼 따옴표로 감싸야 함
+                        return today.AddDays(i).ToString("M'/'d");
                     })
                     .ToArray();
 
@@ -596,6 +598,75 @@ namespace StudyPlanner
                     LoadExams();
                     LoadDashboard();
                 }
+            }
+        }
+
+        // ===================== 백업 / 복원 (JSON) =====================
+
+        // [내보내기] 버튼 — 현재 DB를 JSON 파일로 저장
+        private void btnExport_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.SaveFileDialog
+            {
+                FileName = $"학습플래너_백업_{DateTime.Now:yyyyMMdd_HHmmss}",
+                DefaultExt = ".json",
+                Filter = "JSON 파일 (*.json)|*.json|모든 파일 (*.*)|*.*"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            try
+            {
+                var (topicCount, examCount) = BackupService.ExportToFile(dlg.FileName);
+                MessageBox.Show(
+                    $"백업 완료!\n\n학습 주제 {topicCount}건, 시험 {examCount}건이 저장되었습니다.\n\n파일: {dlg.FileName}",
+                    "내보내기 성공", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"내보내기 실패\n\n{ex.Message}", "오류",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // [가져오기] 버튼 — JSON 파일을 DB에 추가 또는 교체
+        private void btnImport_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "JSON 파일 (*.json)|*.json|모든 파일 (*.*)|*.*"
+            };
+            if (dlg.ShowDialog() != true) return;
+
+            // 가져오기 방식 선택 (교체 vs 추가)
+            var choice = MessageBox.Show(
+                "기존 데이터를 어떻게 처리할까요?\n\n" +
+                "[예]   기존 데이터를 모두 삭제하고 가져오기 (교체)\n" +
+                "[아니오] 기존 데이터를 유지하고 추가하기 (병합)\n" +
+                "[취소] 가져오기 중단",
+                "가져오기 방식", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+
+            if (choice == MessageBoxResult.Cancel) return;
+            bool replaceExisting = (choice == MessageBoxResult.Yes);
+
+            try
+            {
+                var (topicCount, examCount) = BackupService.ImportFromFile(dlg.FileName, replaceExisting);
+
+                // 화면 전체 갱신
+                LoadTopics();
+                LoadReviewList();
+                LoadExams();
+                LoadDashboard();
+
+                string mode = replaceExisting ? "교체" : "추가";
+                MessageBox.Show(
+                    $"가져오기 완료! ({mode})\n\n학습 주제 {topicCount}건, 시험 {examCount}건이 반영되었습니다.",
+                    "가져오기 성공", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"가져오기 실패\n\n{ex.Message}", "오류",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
